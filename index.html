@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>선생님 부재 여부 - 실시간 동기화 (Firebase)</title>
+    <title>선생님 현황판 - 실시간 동기화 (Firebase)</title>
 
     <meta name="theme-color" content="#4f46e5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="선생님부재여부">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E">
+    <meta name="apple-mobile-web-app-title" content="선생님현황판">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%8F%EF%B8%8F%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%8F%EF%B8%8F%3C/text%3E%3C/svg%3E">
 
     <style>
         /* CSS는 이전과 동일합니다. .status-btn의 display: flex; 포함 */
@@ -36,7 +36,18 @@
         .teacher-card { background: rgba(255, 255, 255, 0.9); border-radius: 1rem; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .teacher-card:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
         .teacher-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
-        .teacher-avatar { width: 48px; height: 48px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        .teacher-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 24px; /* 아이콘이 잘 보이도록 크기 조정 */
+        }
         .teacher-name { font-size: 1.25rem; font-weight: bold; color: #1f2937; }
         .teacher-subject { font-size: 0.875rem; color: #6b7280; }
         .status-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; border: 1px solid; }
@@ -80,8 +91,8 @@
         <div id="mainDashboard">
             <div class="header">
                 <div>
-                    <h1>선생님 부재 여부</h1>
-                    <p>실시간 선생님 부재 여부를 확인하세요</p>
+                    <h1>선생님 현황판</h1>
+                    <p>실시간 선생님 상태를 확인하세요</p>
                 </div>
                 <button class="btn btn-primary" id="loginButton">
                     🔑 선생님 로그인
@@ -123,7 +134,7 @@
         <div id="teacherModal" class="dashboard-modal hidden">
             <div class="modal-content">
                 <div class="modal-header">
-                    <div class="modal-icon"></div>
+                    <div class="modal-icon">🔑</div>
                     <h2 id="teacherName"></h2>
                     <p id="teacherSubject"></p>
                 </div>
@@ -138,22 +149,22 @@
                     <label class="form-label">상태 변경</label>
                     <div class="status-buttons">
                         <button class="status-btn" data-status="교무실에 있음">
-                            교무실
+                            🏠 교무실
                         </button>
                         <button class="status-btn" data-status="수업 중">
-                            수업 중
+                            📚 수업 중
                         </button>
                         <button class="status-btn" data-status="부재중">
-                            부재중
+                            ❌ 부재중
                         </button>
                         <button class="status-btn" data-status="학교에 없음">
-                            학교에 없음
+                            🚪 학교에 없음
                         </button>
                     </div>
                 </div>
 
                 <button class="btn btn-danger" id="logoutBtn" style="width: 100%;">
-                    로그아웃
+                    🚪 로그아웃
                 </button>
             </div>
         </div>
@@ -183,17 +194,17 @@
         // Firebase Realtime Database의 'teachers' 경로를 참조합니다.
         const teachersRef = ref(database, 'teachers');
 
-        // --- 선생님 부재 여부 애플리케이션 로직 시작 ---
+        // --- 선생님 현황판 애플리케이션 로직 시작 ---
 
         let teachers = []; // Firebase에서 데이터를 불러와 저장할 배열
         let currentTeacher = null; // 현재 로그인된 선생님 정보
 
-        // 상태별 CSS 클래스 정의 (이모티콘 제거)
+        // 상태별 CSS 클래스와 아이콘 정의
         const statusConfig = {
-            "교무실에 있음": { class: "status-office", icon: "" }, // 이모티콘 제거
-            "부재중": { class: "status-away", icon: "" }, // 이모티콘 제거
-            "수업 중": { class: "status-class", icon: "" }, // 이모티콘 제거
-            "학교에 없음": { class: "status-not-school", icon: "" } // 이모티콘 제거
+            "교무실에 있음": { class: "status-office", icon: "🏠" },
+            "부재중": { class: "status-away", icon: "❌" },
+            "수업 중": { class: "status-class", icon: "📚" },
+            "학교에 없음": { class: "status-not-school", icon: "🚪" }
         };
 
         /**
@@ -277,6 +288,17 @@
             });
         }
 
+        // 과목별 아이콘 정의 (수학은 '+'로 변경)
+        const subjectIcons = {
+            "수학": "➕", // 수학 아이콘을 더하기(+)로 변경
+            "물리": "⚛️",
+            "사회": "🏛️",
+            "역사": "📜",
+            "생명": "🌱",
+            "국어": "📖",
+            "영어": "🔤"
+        };
+
         /**
          * 메인 대시보드에 개별 선생님 카드를 렌더링합니다.
          */
@@ -289,9 +311,12 @@
                 const config = statusConfig[teacher.status];
                 const teacherCard = document.createElement('div');
                 teacherCard.className = 'teacher-card';
+                // 과목에 맞는 아이콘을 찾아 사용, 없으면 기본 연필 아이콘
+                const subjectIcon = subjectIcons[teacher.subject] || "✏️";
                 teacherCard.innerHTML = `
                     <div class="teacher-header">
                         <div class="teacher-avatar">
+                            ${subjectIcon}
                         </div>
                         <div>
                             <div class="teacher-name">${teacher.name}</div>
@@ -369,7 +394,7 @@
             document.getElementById('teacherName').textContent = currentTeacher.name + '님';
             document.getElementById('teacherSubject').textContent = currentTeacher.subject + ' 담당';
             updateCurrentStatusDisplay(); // 현재 상태를 화면에 업데이트
-            updateStatusButtons();       // 상태 변경 버튼 활성화 상태 업데이트
+            updateStatusButtons();         // 상태 변경 버튼 활성화 상태 업데이트
             document.getElementById('teacherModal').classList.remove('hidden');
         }
 
@@ -409,7 +434,7 @@
             const teacherIndex = teachers.findIndex(t => t.name === currentTeacher.name);
             if (teacherIndex !== -1) {
                 teachers[teacherIndex].status = newStatus; // 로컬 teachers 배열의 상태 업데이트
-                currentTeacher.status = newStatus;          // 현재 로그인된 선생님 객체의 상태도 업데이트
+                currentTeacher.status = newStatus;         // 현재 로그인된 선생님 객체의 상태도 업데이트
 
                 // Firebase Realtime Database에 업데이트된 teachers 배열 전체를 저장합니다.
                 set(teachersRef, teachers)
