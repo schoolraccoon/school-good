@@ -71,7 +71,7 @@
                     <h1>선생님 현황판</h1>
                     <p>실시간 선생님 상태를 확인하세요</p>
                 </div>
-                <button class="btn btn-primary" onclick="showLogin()">
+                <button class="btn btn-primary" id="loginButton">
                     🔑 선생님 로그인
                 </button>
             </div>
@@ -149,11 +149,7 @@
 
     <script type="module">
         // --- Firebase SDK 초기화 부분 ---
-        // 제공해주신 firebaseConfig 객체와 필요한 Realtime Database 모듈을 임포트합니다.
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-        // import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-analytics.js"; // 분석 기능을 사용하지 않으면 필요 없습니다.
-        
-        // Realtime Database 관련 함수들을 임포트합니다.
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
         // 제공해주신 Firebase Configuration
@@ -170,13 +166,9 @@
 
         // Firebase 앱을 초기화합니다.
         const app = initializeApp(firebaseConfig);
-        // const analytics = getAnalytics(app); // 분석 기능을 사용하지 않으면 이 줄은 제거해도 됩니다.
-
         // Realtime Database 인스턴스를 초기화합니다.
         const database = getDatabase(app); 
-
         // Firebase Realtime Database의 'teachers' 경로를 참조합니다.
-        // 모든 선생님 데이터는 이 경로 아래에 JSON 형태로 저장됩니다.
         const teachersRef = ref(database, 'teachers'); 
 
         // --- 선생님 현황판 애플리케이션 로직 시작 ---
@@ -312,6 +304,9 @@
         function showLogin() {
             document.getElementById('loginModal').classList.remove('hidden');
             document.getElementById('loginName').focus(); // 이름 입력 필드에 포커스
+            document.getElementById('loginError').classList.add('hidden'); // 오류 메시지 숨기기
+            document.getElementById('loginName').value = ''; // 필드 초기화
+            document.getElementById('loginPassword').value = ''; // 필드 초기화
         }
 
         /**
@@ -432,6 +427,16 @@
 
         // 페이지 로드 시 Firebase 데이터 리스너를 설정하여 실시간 동기화를 시작합니다.
         initializeFirebaseDataListener();
+
+        // **새로 추가된 부분: 로그인 버튼에 클릭 이벤트 리스너 연결**
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginButton = document.getElementById('loginButton');
+            if (loginButton) {
+                loginButton.addEventListener('click', showLogin);
+            } else {
+                console.error("ID 'loginButton'을 가진 로그인 버튼을 찾을 수 없습니다. HTML을 확인해주세요.");
+            }
+        });
 
         // 로그인 폼에서 Enter 키를 눌렀을 때 로그인 처리
         document.addEventListener('keydown', function(event) {
