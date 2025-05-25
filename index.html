@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>선생님 현황판 - 실시간 동기화 (Firebase)</title>
+    <title>선생님 부재중 확인하기 - 실시간 동기화 (Firebase)</title>
     
     <meta name="theme-color" content="#4f46e5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="선생님현황판">
+    <meta name="apple-mobile-web-app-title" content="선생님 부재중 확인">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E👨‍🏫%3C/text%3E%3C/svg%3E">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E👨‍🏫%3C/text%3E%3C/svg%3E">
 
@@ -44,6 +44,15 @@
         .status-class { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
         .status-away { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
         .status-not-school { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
+        /* Subject-specific icons */
+        .subject-math { background: #fff7ed; color: #d97706; border-color: #fbbf24; }
+        .subject-physics { background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; }
+        .subject-social { background: #f0fdf4; color: #0f766e; border-color: #6ee7b7; }
+        .subject-history { background: #fef2f2; color: #b91c1c; border-color: #fca5a5; }
+        .subject-life { background: #f5f3ff; color: #6d28d9; border-color: #c4b5fd; }
+        .subject-korean { background: #fefce8; color: #b45309; border-color: #fde68a; }
+        .subject-english { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+
         .login-modal, .dashboard-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 2rem; border-radius: 1rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); width: 90%; max-width: 400px; }
         .modal-header { text-align: center; margin-bottom: 2rem; }
@@ -80,7 +89,7 @@
         <div id="mainDashboard">
             <div class="header">
                 <div>
-                    <h1>선생님 현황판</h1>
+                    <h1>선생님 부재중 확인하기</h1>
                     <p>실시간 선생님 상태를 확인하세요</p>
                 </div>
                 <button class="btn btn-primary" id="loginButton">
@@ -137,7 +146,7 @@
                 <div>
                     <label class="form-label">상태 변경</label>
                     <div class="status-buttons">
-                        <button class="status-btn" data-status="교무실에 있음">
+                        <button class="status-btn" data-status="교무실">
                             🏠 교무실
                         </button>
                         <button class="status-btn" data-status="수업 중">
@@ -146,8 +155,8 @@
                         <button class="status-btn" data-status="부재중">
                             ❌ 부재중
                         </button>
-                        <button class="status-btn" data-status="학교에 없음">
-                            🚪 학교에 없음
+                        <button class="status-btn" data-status="퇴근/출근 전">
+                            🚪 퇴근/출근 전
                         </button>
                     </div>
                 </div>
@@ -190,11 +199,23 @@
 
         // 상태별 CSS 클래스와 아이콘 정의
         const statusConfig = {
-            "교무실에 있음": { class: "status-office", icon: "🏠" },
+            "교무실": { class: "status-office", icon: "🏠" },
             "부재중": { class: "status-away", icon: "❌" },
             "수업 중": { class: "status-class", icon: "📚" },
-            "학교에 없음": { class: "status-not-school", icon: "🚪" }
+            "퇴근/출근 전": { class: "status-not-school", icon: "🚪" }
         };
+
+        // 과목별 CSS 클래스 정의 (선생님 카드에 적용될 예정)
+        const subjectConfig = {
+            "수학": "subject-math",
+            "물리": "subject-physics",
+            "사회": "subject-social",
+            "역사": "subject-history",
+            "생명": "subject-life",
+            "국어": "subject-korean",
+            "영어": "subject-english"
+        };
+
 
         /**
          * Realtime Database에서 데이터를 불러오고, UI를 렌더링하는 실시간 리스너를 설정합니다.
@@ -208,14 +229,14 @@
                 if (!data) {
                     console.log("Firebase에 데이터가 없어 초기 데이터 설정 중...");
                     const defaultTeachers = [
-                        { name: "이명용T", status: "교무실에 있음", password: "0101", subject: "수학" },
-                        { name: "정평강T", status: "교무실에 있음", password: "0101", subject: "물리" },
-                        { name: "조형일T", status: "교무실에 있음", password: "0101", subject: "사회" },
-                        { name: "김성현T", status: "교무실에 있음", password: "0101", subject: "역사" },
-                        { name: "박상희T", status: "교무실에 있음", password: "0101", subject: "생명" },
-                        { name: "이소라T", status: "교무실에 있음", password: "0101", subject: "국어" },
-                        { name: "서혁진T", status: "교무실에 있음", password: "0101", subject: "수학" },
-                        { name: "장건기T", status: "교무실에 있음", password: "0101", subject: "영어" },
+                        { name: "이명용T", status: "교무실", password: "0101", subject: "수학" },
+                        { name: "정평강T", status: "교무실", password: "0101", subject: "물리" },
+                        { name: "조형일T", status: "교무실", password: "0101", subject: "사회" },
+                        { name: "김성현T", status: "교무실", password: "0101", subject: "역사" },
+                        { name: "박상희T", status: "교무실", password: "0101", subject: "생명" },
+                        { name: "이소라T", status: "교무실", password: "0101", subject: "국어" },
+                        { name: "서혁진T", status: "교무실", password: "0101", subject: "수학" },
+                        { name: "장건기T", status: "교무실", password: "0101", subject: "영어" },
                     ];
                     // Firebase에 초기 데이터를 한 번만 저장(덮어쓰기)
                     set(teachersRef, defaultTeachers)
@@ -286,9 +307,10 @@
 
             // 각 선생님별로 카드 생성 및 추가
             teachers.forEach(teacher => {
-                const config = statusConfig[teacher.status];
+                const statusConfigItem = statusConfig[teacher.status];
+                const subjectClass = subjectConfig[teacher.subject] || ''; // 과목별 클래스 추가
                 const teacherCard = document.createElement('div');
-                teacherCard.className = 'teacher-card';
+                teacherCard.className = `teacher-card ${subjectClass}`; // 과목별 클래스 적용
                 teacherCard.innerHTML = `
                     <div class="teacher-header">
                         <div class="teacher-avatar">
@@ -299,8 +321,8 @@
                             <div class="teacher-subject">${teacher.subject}</div>
                         </div>
                     </div>
-                    <div class="status-badge ${config.class}">
-                        ${config.icon} ${teacher.status}
+                    <div class="status-badge ${statusConfigItem.class}">
+                        ${statusConfigItem.icon} ${teacher.status}
                     </div>
                 `;
                 teachersGrid.appendChild(teacherCard);
@@ -370,7 +392,7 @@
             document.getElementById('teacherName').textContent = currentTeacher.name + '님';
             document.getElementById('teacherSubject').textContent = currentTeacher.subject + ' 담당';
             updateCurrentStatusDisplay(); // 현재 상태를 화면에 업데이트
-            updateStatusButtons();       // 상태 변경 버튼 활성화 상태 업데이트
+            updateStatusButtons();     // 상태 변경 버튼 활성화 상태 업데이트
             document.getElementById('teacherModal').classList.remove('hidden');
         }
 
