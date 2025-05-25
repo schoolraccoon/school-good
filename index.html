@@ -13,7 +13,7 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E👨‍🏫%3C/text%3E%3C/svg%3E">
 
     <style>
-        /* 기본 CSS 스타일은 이전 코드와 동일합니다. */
+        /* CSS는 이전과 동일합니다. .status-btn의 display: flex; 포함 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #f1f5f9 0%, #dbeafe 100%); min-height: 100vh; padding: 1rem; }
         .container { max-width: 1200px; margin: 0 auto; }
@@ -61,7 +61,7 @@
             background: white; 
             border-radius: 0.5rem; 
             cursor: pointer; 
-            display: flex; /* <-- 이 부분 수정 */
+            display: flex;
             align-items: center; 
             justify-content: center; 
             gap: 0.5rem; 
@@ -102,7 +102,7 @@
                     <h2>선생님 로그인</h2>
                     <p>이름과 비밀번호를 입력하세요</p>
                 </div>
-                <form onsubmit="handleLogin(event)">
+                <form id="loginForm"> 
                     <div class="form-group">
                         <label class="form-label">이름</label>
                         <input type="text" class="form-input" id="loginName" placeholder="이름을 입력해주세요" required>
@@ -114,7 +114,7 @@
                     <div id="loginError" class="error-message hidden"></div>
                     <div style="display: flex; gap: 1rem;">
                         <button type="submit" class="btn btn-primary" style="flex: 1;">로그인</button>
-                        <button type="button" class="btn btn-outline" onclick="hideLogin()" style="flex: 1;">돌아가기</button>
+                        <button type="button" class="btn btn-outline" id="loginCancelBtn" style="flex: 1;">돌아가기</button>
                     </div>
                 </form>
             </div>
@@ -137,22 +137,22 @@
                 <div>
                     <label class="form-label">상태 변경</label>
                     <div class="status-buttons">
-                        <button class="status-btn" onclick="updateStatus('교무실에 있음')">
+                        <button class="status-btn" data-status="교무실에 있음">
                             🏠 교무실
                         </button>
-                        <button class="status-btn" onclick="updateStatus('수업 중')">
+                        <button class="status-btn" data-status="수업 중">
                             📚 수업 중
                         </button>
-                        <button class="status-btn" onclick="updateStatus('부재중')">
+                        <button class="status-btn" data-status="부재중">
                             ❌ 부재중
                         </button>
-                        <button class="status-btn" onclick="updateStatus('학교에 없음')">
+                        <button class="status-btn" data-status="학교에 없음">
                             🚪 학교에 없음
                         </button>
                     </div>
                 </div>
 
-                <button class="btn btn-danger" onclick="logout()" style="width: 100%;">
+                <button class="btn btn-danger" id="logoutBtn" style="width: 100%;">
                     🚪 로그아웃
                 </button>
             </div>
@@ -246,7 +246,6 @@
                 // 오류 발생 시 사용자에게 메시지를 표시하거나 재시도 로직을 추가할 수 있습니다.
             });
         }
-
 
         /**
          * 현재 선생님 상태를 기반으로 통계 카드를 렌더링합니다.
@@ -392,20 +391,9 @@
             const buttons = document.querySelectorAll('.status-btn');
             buttons.forEach(btn => {
                 btn.classList.remove('active'); // 모든 버튼의 활성화 클래스 제거
-
-                // 버튼 텍스트에서 실제 상태 값만 추출하여 정확히 비교
-                let buttonStatusText = '';
-                if (btn.textContent.includes('교무실')) {
-                    buttonStatusText = '교무실에 있음';
-                } else if (btn.textContent.includes('수업 중')) {
-                    buttonStatusText = '수업 중';
-                } else if (btn.textContent.includes('부재중')) {
-                    buttonStatusText = '부재중';
-                } else if (btn.textContent.includes('학교에 없음')) {
-                    buttonStatusText = '학교에 없음';
-                }
                 
-                if (currentTeacher.status === buttonStatusText) {
+                const buttonStatus = btn.getAttribute('data-status');
+                if (currentTeacher.status === buttonStatus) {
                     btn.classList.add('active'); 
                 }
             });
@@ -448,24 +436,16 @@
             // 보안을 위해 로그인 필드도 초기화
             document.getElementById('loginName').value = '';
             document.getElementById('loginPassword').value = '';
+            console.log("로그아웃되었습니다."); // 로그아웃 확인용 로그
         }
 
         // --- 초기 로드 및 이벤트 리스너 설정 ---
 
-        // HTML의 onclick 속성에서 직접 호출할 함수들을 window 객체에 노출시킵니다.
-        // 이는 type="module" 스크립트의 스코프 문제를 해결하기 위함입니다.
-        window.showLogin = showLogin;
-        window.hideLogin = hideLogin;
-        window.handleLogin = handleLogin;
-        window.updateStatus = updateStatus;
-        window.logout = logout;
-
-
-        // DOMContentLoaded 이벤트 리스너 안에 모든 초기화 및 이벤트 연결 코드를 넣습니다.
         document.addEventListener('DOMContentLoaded', () => {
             // 페이지 로드 시 Firebase 데이터 리스너를 설정하여 실시간 동기화를 시작합니다.
             initializeFirebaseDataListener(); 
 
+            // 로그인 버튼 이벤트 리스너
             const loginButton = document.getElementById('loginButton');
             if (loginButton) {
                 loginButton.addEventListener('click', showLogin);
@@ -474,14 +454,49 @@
                 console.error("ID 'loginButton'을 가진 로그인 버튼을 찾을 수 없습니다. HTML을 확인해주세요.");
             }
 
-            // 로그인 폼에서 Enter 키를 눌렀을 때 로그인 처리
+            // 로그인 폼 제출 이벤트 리스너
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleLogin);
+            }
+
+            // 로그인 취소 버튼 이벤트 리스너
+            const loginCancelBtn = document.getElementById('loginCancelBtn');
+            if (loginCancelBtn) {
+                loginCancelBtn.addEventListener('click', hideLogin);
+            }
+
+            // Enter 키 입력 시 로그인 처리 (현재 로그인 모달이 열려 있을 때만)
             document.addEventListener('keydown', function(event) {
                 const loginModal = document.getElementById('loginModal');
                 if (event.key === 'Enter' && !loginModal.classList.contains('hidden')) {
-                    // handleLogin 함수가 window 객체에 노출되었으므로 직접 호출 가능
-                    handleLogin(event); 
+                    // 폼 자체에 submit 이벤트 리스너가 있으므로, 여기서는 submit을 트리거합니다.
+                    // 이렇게 하면 handleLogin 함수가 직접 호출되는 것과 동일한 효과를 냅니다.
+                    loginForm.dispatchEvent(new Event('submit'));
                 }
             });
+
+            // **상태 변경 버튼 이벤트 리스너**
+            const statusButtons = document.querySelectorAll('.status-btn');
+            statusButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const newStatus = btn.getAttribute('data-status');
+                    if (newStatus) {
+                        updateStatus(newStatus);
+                    } else {
+                        console.warn("상태 변경 버튼에 'data-status' 속성이 없습니다:", btn);
+                    }
+                });
+            });
+
+            // **로그아웃 버튼 이벤트 리스너**
+            const logoutButton = document.getElementById('logoutBtn');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', logout);
+                console.log("로그아웃 버튼에 클릭 리스너가 성공적으로 연결되었습니다.");
+            } else {
+                console.error("ID 'logoutBtn'을 가진 로그아웃 버튼을 찾을 수 없습니다. HTML을 확인해주세요.");
+            }
         });
     </script>
 </body>
