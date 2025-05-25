@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>선생님 현황판</title>
     
-    <!-- PWA 설정 -->
     <meta name="theme-color" content="#4f46e5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -350,7 +349,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Main Dashboard -->
         <div id="mainDashboard">
             <div class="header">
                 <div>
@@ -363,15 +361,12 @@
             </div>
 
             <div class="stats-grid" id="statsGrid">
-                <!-- Stats will be populated by JavaScript -->
-            </div>
+                </div>
 
             <div class="teachers-grid" id="teachersGrid">
-                <!-- Teachers will be populated by JavaScript -->
-            </div>
+                </div>
         </div>
 
-        <!-- Login Modal -->
         <div id="loginModal" class="login-modal hidden">
             <div class="modal-content">
                 <div class="modal-header">
@@ -397,7 +392,6 @@
             </div>
         </div>
 
-        <!-- Teacher Dashboard Modal -->
         <div id="teacherModal" class="dashboard-modal hidden">
             <div class="modal-content">
                 <div class="modal-header">
@@ -438,59 +432,35 @@
     </div>
 
     <script>
-        // 쿠키 관리 함수들
-        function setCookie(name, value, days = 365) {
-            const expires = new Date();
-            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
-            document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/`;
-        }
-
-        function getCookie(name) {
-            const nameEQ = name + "=";
-            const ca = document.cookie.split(';');
-            for(let i = 0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-                if (c.indexOf(nameEQ) === 0) {
-                    return decodeURIComponent(c.substring(nameEQ.length, c.length));
-                }
+        // 데이터 초기화 및 로드
+        function initializeData() {
+            // Check if data exists in localStorage
+            const storedTeachers = localStorage.getItem('teacherStatusBoardData');
+            if (storedTeachers) {
+                // If data exists, parse and return it
+                return JSON.parse(storedTeachers);
+            } else {
+                // If no data, use the default set and save it to localStorage
+                const defaultTeachers = [
+                    { name: "이명용T", status: "교무실에 있음", password: "0101", subject: "수학" },
+                    { name: "정평강T", status: "교무실에 있음", password: "0101", subject: "물리" },
+                    { name: "조형일T", status: "교무실에 있음", password: "0101", subject: "사회" },
+                    { name: "김성현T", status: "교무실에 있음", password: "0101", subject: "역사" },
+                    { name: "박상희T", status: "교무실에 있음", password: "0101", subject: "생명" },
+                    { name: "이소라T", status: "교무실에 있음", password: "0101", subject: "국어" },
+                    { name: "서혁진T", status: "교무실에 있음", password: "0101", subject: "수학" },
+                    { name: "장건기T", status: "교무실에 있음", password: "0101", subject: "영어" },
+                ];
+                localStorage.setItem('teacherStatusBoardData', JSON.stringify(defaultTeachers));
+                return defaultTeachers;
             }
-            return null;
         }
 
-        // 기본 선생님 데이터
-        const defaultTeachers = [
-            { name: "이명용T", status: "교무실에 있음", password: "0101", subject: "수학" },
-            { name: "정평강T", status: "교무실에 있음", password: "0101", subject: "물리" },
-            { name: "조형일T", status: "교무실에 있음", password: "0101", subject: "사회" },
-            { name: "김성현T", status: "교무실에 있음", password: "0101", subject: "역사" },
-            { name: "박상희T", status: "교무실에 있음", password: "0101", subject: "생명" },
-            { name: "이소라T", status: "교무실에 있음", password: "0101", subject: "국어" },
-            { name: "서혁진T", status: "교무실에 있음", password: "0101", subject: "수학" },
-            { name: "장건기T", status: "교무실에 있음", password: "0101", subject: "영어" },
-        ];
+        // Load teachers data from localStorage or use defaults
+        let teachers = initializeData();
+        let currentTeacher = null; // Stores the currently logged-in teacher
 
-        // 데이터 로드 함수
-        function loadTeachersData() {
-            const savedData = getCookie('teachersData');
-            if (savedData) {
-                try {
-                    return JSON.parse(savedData);
-                } catch (e) {
-                    console.log('저장된 데이터를 불러오는데 실패했습니다. 초기 데이터를 사용합니다.');
-                }
-            }
-            return defaultTeachers;
-        }
-
-        // 데이터 저장 함수
-        function saveTeachersData() {
-            setCookie('teachersData', JSON.stringify(teachers));
-        }
-
-        let teachers = loadTeachersData();
-        let currentTeacher = null;
-
+        // Configuration for status badges (classes and icons)
         const statusConfig = {
             "교무실에 있음": { class: "status-office", icon: "🏠" },
             "부재중": { class: "status-away", icon: "❌" },
@@ -498,15 +468,22 @@
             "학교에 없음": { class: "status-not-school", icon: "🚪" }
         };
 
+        // --- Render Functions ---
+
+        /**
+         * Renders the statistics cards based on current teacher statuses.
+         */
         function renderStats() {
             const stats = {};
+            // Count teachers for each status
             teachers.forEach(teacher => {
                 stats[teacher.status] = (stats[teacher.status] || 0) + 1;
             });
 
             const statsGrid = document.getElementById('statsGrid');
-            statsGrid.innerHTML = '';
+            statsGrid.innerHTML = ''; // Clear previous stats
 
+            // Create and append a stat card for each status
             Object.entries(statusConfig).forEach(([status, config]) => {
                 const count = stats[status] || 0;
                 const statCard = document.createElement('div');
@@ -524,10 +501,14 @@
             });
         }
 
+        /**
+         * Renders the individual teacher cards on the main dashboard.
+         */
         function renderTeachers() {
             const teachersGrid = document.getElementById('teachersGrid');
-            teachersGrid.innerHTML = '';
+            teachersGrid.innerHTML = ''; // Clear previous teacher cards
 
+            // Create and append a card for each teacher
             teachers.forEach(teacher => {
                 const config = statusConfig[teacher.status];
                 const teacherCard = document.createElement('div');
@@ -550,48 +531,73 @@
             });
         }
 
+        // --- Login Modal Functions ---
+
+        /**
+         * Displays the login modal.
+         */
         function showLogin() {
             document.getElementById('loginModal').classList.remove('hidden');
-            document.getElementById('loginName').focus();
+            document.getElementById('loginName').focus(); // Focus on the name input
         }
 
+        /**
+         * Hides the login modal and clears input fields.
+         */
         function hideLogin() {
             document.getElementById('loginModal').classList.add('hidden');
-            document.getElementById('loginError').classList.add('hidden');
+            document.getElementById('loginError').classList.add('hidden'); // Hide any error messages
             document.getElementById('loginName').value = '';
             document.getElementById('loginPassword').value = '';
         }
 
+        /**
+         * Handles the login form submission.
+         * @param {Event} event - The form submission event.
+         */
         function handleLogin(event) {
-            event.preventDefault();
-            const name = document.getElementById('loginName').value.toLowerCase();
+            event.preventDefault(); // Prevent default form submission
+            const name = document.getElementById('loginName').value.toLowerCase().trim();
             const password = document.getElementById('loginPassword').value;
 
+            // Find if a teacher matches the provided name and password
             const teacher = teachers.find(t => {
                 const teacherName = t.name.toLowerCase();
+                // Allow login by name with or without 'T' suffix (e.g., "이명용" or "이명용t")
                 const nameMatch = teacherName === name || teacherName.replace('t', '') === name;
                 return nameMatch && t.password === password;
             });
 
             if (teacher) {
-                currentTeacher = teacher;
-                hideLogin();
-                showTeacherDashboard();
+                currentTeacher = teacher; // Set the logged-in teacher
+                hideLogin(); // Hide login modal
+                showTeacherDashboard(); // Show teacher dashboard
             } else {
+                // Display error message
                 const errorDiv = document.getElementById('loginError');
                 errorDiv.textContent = '이름 또는 비밀번호가 올바르지 않습니다.';
                 errorDiv.classList.remove('hidden');
             }
         }
 
+        // --- Teacher Dashboard Functions ---
+
+        /**
+         * Displays the teacher-specific dashboard modal.
+         */
         function showTeacherDashboard() {
+            if (!currentTeacher) return; // Should not happen if login is successful
+
             document.getElementById('teacherName').textContent = currentTeacher.name + '님';
             document.getElementById('teacherSubject').textContent = currentTeacher.subject + ' 담당';
-            updateCurrentStatusDisplay();
-            updateStatusButtons();
+            updateCurrentStatusDisplay(); // Update the displayed current status
+            updateStatusButtons();       // Highlight the active status button
             document.getElementById('teacherModal').classList.remove('hidden');
         }
 
+        /**
+         * Updates the current status display within the teacher dashboard.
+         */
         function updateCurrentStatusDisplay() {
             const config = statusConfig[currentTeacher.status];
             document.getElementById('currentStatus').innerHTML = `
@@ -599,26 +605,36 @@
             `;
         }
 
+        /**
+         * Highlights the button corresponding to the current teacher's status.
+         */
         function updateStatusButtons() {
             const buttons = document.querySelectorAll('.status-btn');
             buttons.forEach(btn => {
-                btn.classList.remove('active');
+                btn.classList.remove('active'); // Remove active class from all buttons
                 const btnText = btn.textContent.trim();
+                // Check if the button text broadly includes the current status (e.g., "교무실" for "교무실에 있음")
                 if (btnText.includes(currentTeacher.status.split(' ')[0])) {
-                    btn.classList.add('active');
+                    btn.classList.add('active'); // Add active class to the matching button
                 }
             });
         }
 
+        /**
+         * Updates the status of the logged-in teacher and saves to localStorage.
+         * @param {string} newStatus - The new status to set for the teacher.
+         */
         function updateStatus(newStatus) {
+            // Find the index of the current teacher in the teachers array
             const teacherIndex = teachers.findIndex(t => t.name === currentTeacher.name);
             if (teacherIndex !== -1) {
-                teachers[teacherIndex].status = newStatus;
-                currentTeacher.status = newStatus;
+                teachers[teacherIndex].status = newStatus; // Update status in the main array
+                currentTeacher.status = newStatus;         // Update status in the currentTeacher object
+
+                // --- Persistence: Save updated data to localStorage ---
+                localStorage.setItem('teacherStatusBoardData', JSON.stringify(teachers));
                 
-                // 쿠키에 데이터 저장
-                saveTeachersData();
-                
+                // Re-render relevant parts of the UI
                 updateCurrentStatusDisplay();
                 updateStatusButtons();
                 renderStats();
@@ -626,27 +642,36 @@
             }
         }
 
+        /**
+         * Logs out the current teacher and hides the dashboard modal.
+         */
         function logout() {
-            currentTeacher = null;
+            currentTeacher = null; // Clear the logged-in teacher
             document.getElementById('teacherModal').classList.add('hidden');
+            // Optionally, clear login fields when logging out for security
+            document.getElementById('loginName').value = '';
+            document.getElementById('loginPassword').value = '';
         }
 
-        // Initialize the dashboard
+        // --- Initial Load & Event Listeners ---
+
+        // Render the initial dashboard when the page loads
         renderStats();
         renderTeachers();
 
-        // Handle Enter key in login form
+        // Add event listener for Enter key in the login form for convenience
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 const loginModal = document.getElementById('loginModal');
                 if (!loginModal.classList.contains('hidden')) {
-                    handleLogin(event);
+                    handleLogin(event); // Trigger login on Enter key press
                 }
             }
         });
 
-        // 주기적으로 데이터 저장
-        setInterval(saveTeachersData, 100);
+        // The 'beforeunload' event listener is not strictly necessary anymore
+        // because data is saved immediately on status change using localStorage.
+        // It could be used for other cleanup tasks if needed, but not for data persistence in this case.
     </script>
 </body>
 </html>
