@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>선생님 부재 시스템 - 실시간 동기화 (Firebase)</title>
+    <title>선생님 부재 여부 - 실시간 동기화 (Firebase)</title>
 
     <meta name="theme-color" content="#4f46e5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="선생님 부재 시스템">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%91%A8%E2%80%8D%F0%9F%8F%AB%3C/text%3E%3C/svg%3E">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%91%A8%E2%80%8D%F0%9F%8F%AB%3C/text%3E%3C/svg%3E">
+    <meta name="apple-mobile-web-app-title" content="선생님부재여부">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E">
 
     <style>
         /* CSS는 이전과 동일합니다. .status-btn의 display: flex; 포함 */
@@ -81,7 +81,7 @@
             <div class="header">
                 <div>
                     <h1>선생님 부재 여부</h1>
-                    <p>실시간 부재 여부를 상태를 확인하세요</p>
+                    <p>실시간 선생님 부재 여부를 확인하세요</p>
                 </div>
                 <button class="btn btn-primary" id="loginButton">
                     🔑 선생님 로그인
@@ -123,6 +123,7 @@
         <div id="teacherModal" class="dashboard-modal hidden">
             <div class="modal-content">
                 <div class="modal-header">
+                    <div class="modal-icon"></div>
                     <h2 id="teacherName"></h2>
                     <p id="teacherSubject"></p>
                 </div>
@@ -136,23 +137,23 @@
                 <div>
                     <label class="form-label">상태 변경</label>
                     <div class="status-buttons">
-                        <button class="status-btn" data-status="교무실">
-                            🏠 교무실
+                        <button class="status-btn" data-status="교무실에 있음">
+                            교무실
                         </button>
                         <button class="status-btn" data-status="수업 중">
-                            📚 수업 중
+                            수업 중
                         </button>
                         <button class="status-btn" data-status="부재중">
-                            ❌ 부재중
+                            부재중
                         </button>
-                        <button class="status-btn" data-status="출근 전 or 퇴근근">
-                            🚪 학교에 없음
+                        <button class="status-btn" data-status="학교에 없음">
+                            학교에 없음
                         </button>
                     </div>
                 </div>
 
                 <button class="btn btn-danger" id="logoutBtn" style="width: 100%;">
-                    🚪 로그아웃
+                    로그아웃
                 </button>
             </div>
         </div>
@@ -182,17 +183,17 @@
         // Firebase Realtime Database의 'teachers' 경로를 참조합니다.
         const teachersRef = ref(database, 'teachers');
 
-        // --- 선생님 현황판 애플리케이션 로직 시작 ---
+        // --- 선생님 부재 여부 애플리케이션 로직 시작 ---
 
         let teachers = []; // Firebase에서 데이터를 불러와 저장할 배열
         let currentTeacher = null; // 현재 로그인된 선생님 정보
 
-        // 상태별 CSS 클래스와 아이콘 정의
+        // 상태별 CSS 클래스 정의 (이모티콘 제거)
         const statusConfig = {
-            "교무실": { class: "status-office", icon: "🏠" },
-            "부재중": { class: "status-away", icon: "❌" },
-            "수업 중": { class: "status-class", icon: "📚" },
-            "출근 전 or 퇴근": { class: "status-not-school", icon: "🚪" }
+            "교무실에 있음": { class: "status-office", icon: "" }, // 이모티콘 제거
+            "부재중": { class: "status-away", icon: "" }, // 이모티콘 제거
+            "수업 중": { class: "status-class", icon: "" }, // 이모티콘 제거
+            "학교에 없음": { class: "status-not-school", icon: "" } // 이모티콘 제거
         };
 
         /**
