@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>선생님 현황판</title>
+    
+    <!-- PWA 설정 -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="선생님현황판">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E👨‍🏫%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E👨‍🏫%3C/text%3E%3C/svg%3E">
     <style>
         * {
             margin: 0;
@@ -430,7 +438,28 @@
     </div>
 
     <script>
-        let teachers = [
+        // 쿠키 관리 함수들
+        function setCookie(name, value, days = 365) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/`;
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) {
+                    return decodeURIComponent(c.substring(nameEQ.length, c.length));
+                }
+            }
+            return null;
+        }
+
+        // 기본 선생님 데이터
+        const defaultTeachers = [
             { name: "이명용T", status: "교무실에 있음", password: "0101", subject: "수학" },
             { name: "정평강T", status: "교무실에 있음", password: "0101", subject: "물리" },
             { name: "조형일T", status: "교무실에 있음", password: "0101", subject: "사회" },
@@ -441,6 +470,25 @@
             { name: "장건기T", status: "교무실에 있음", password: "0101", subject: "영어" },
         ];
 
+        // 데이터 로드 함수
+        function loadTeachersData() {
+            const savedData = getCookie('teachersData');
+            if (savedData) {
+                try {
+                    return JSON.parse(savedData);
+                } catch (e) {
+                    console.log('저장된 데이터를 불러오는데 실패했습니다. 초기 데이터를 사용합니다.');
+                }
+            }
+            return defaultTeachers;
+        }
+
+        // 데이터 저장 함수
+        function saveTeachersData() {
+            setCookie('teachersData', JSON.stringify(teachers));
+        }
+
+        let teachers = loadTeachersData();
         let currentTeacher = null;
 
         const statusConfig = {
@@ -567,6 +615,10 @@
             if (teacherIndex !== -1) {
                 teachers[teacherIndex].status = newStatus;
                 currentTeacher.status = newStatus;
+                
+                // 쿠키에 데이터 저장
+                saveTeachersData();
+                
                 updateCurrentStatusDisplay();
                 updateStatusButtons();
                 renderStats();
@@ -592,6 +644,9 @@
                 }
             }
         });
+
+        // 주기적으로 데이터 저장
+        setInterval(saveTeachersData, 100);
     </script>
 </body>
 </html>
