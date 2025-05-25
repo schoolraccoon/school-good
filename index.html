@@ -425,25 +425,28 @@
 
         // --- 초기 로드 및 이벤트 리스너 설정 ---
 
-        // 페이지 로드 시 Firebase 데이터 리스너를 설정하여 실시간 동기화를 시작합니다.
-        initializeFirebaseDataListener();
-
-        // **새로 추가된 부분: 로그인 버튼에 클릭 이벤트 리스너 연결**
+        // DOMContentLoaded 이벤트 리스너 안에 모든 초기화 및 이벤트 연결 코드를 넣습니다.
         document.addEventListener('DOMContentLoaded', () => {
+            // 페이지 로드 시 Firebase 데이터 리스너를 설정하여 실시간 동기화를 시작합니다.
+            // 이 부분이 Firebase에서 데이터를 불러와 'teachers' 배열을 채웁니다.
+            initializeFirebaseDataListener(); 
+
+            // 로그인 버튼에 클릭 이벤트 리스너 연결
             const loginButton = document.getElementById('loginButton');
             if (loginButton) {
                 loginButton.addEventListener('click', showLogin);
+                console.log("로그인 버튼에 클릭 리스너가 성공적으로 연결되었습니다."); 
             } else {
                 console.error("ID 'loginButton'을 가진 로그인 버튼을 찾을 수 없습니다. HTML을 확인해주세요.");
             }
-        });
 
-        // 로그인 폼에서 Enter 키를 눌렀을 때 로그인 처리
-        document.addEventListener('keydown', function(event) {
-            const loginModal = document.getElementById('loginModal');
-            if (event.key === 'Enter' && !loginModal.classList.contains('hidden')) {
-                handleLogin(event); // Enter 키 입력 시 로그인 함수 호출
-            }
+            // 로그인 폼에서 Enter 키를 눌렀을 때 로그인 처리
+            document.addEventListener('keydown', function(event) {
+                const loginModal = document.getElementById('loginModal');
+                if (event.key === 'Enter' && !loginModal.classList.contains('hidden')) {
+                    handleLogin(event); // Enter 키 입력 시 로그인 함수 호출
+                }
+            });
         });
     </script>
 </body>
