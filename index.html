@@ -1,1005 +1,503 @@
 <!DOCTYPE html>
-
 <html lang="ko">
-
 <head>
-
-    <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>선생님 현황판 - 실시간 동기화 (Firebase)</title>
-
-    
-
-    <meta name="theme-color" content="#4f46e5">
-
-    <meta name="apple-mobile-web-app-capable" content="yes">
-
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-    <meta name="apple-mobile-web-app-title" content="선생님현황판">
-
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E👨‍🏫%3C/text%3E%3C/svg%3E">
-
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E👨‍🏫%3C/text%3E%3C/svg%3E">
-
-
-
-    <style>
-
-        /* CSS는 이전과 동일합니다. .status-btn의 display: flex; 포함 */
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #f1f5f9 0%, #dbeafe 100%); min-height: 100vh; padding: 1rem; }
-
-        .container { max-width: 1200px; margin: 0 auto; }
-
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-
-        .header h1 { font-size: 2.5rem; color: #1f2937; margin-bottom: 0.5rem; }
-
-        .header p { color: #6b7280; font-size: 1rem; }
-
-        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }
-
-        .btn-primary { background: #4f46e5; color: white; }
-
-        .btn-primary:hover { background: #4338ca; }
-
-        .btn-outline { background: transparent; border: 2px solid #d1d5db; color: #374151; }
-
-        .btn-outline:hover { background: #f9fafb; }
-
-        .btn-danger { background: #ef4444; color: white; }
-
-        .btn-danger:hover { background: #dc2626; }
-
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-
-        .stat-card { background: rgba(255, 255, 255, 0.8); padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); display: flex; align-items: center; gap: 1rem; }
-
-        .stat-icon { width: 48px; height: 48px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; }
-
-        .stat-count { font-size: 2rem; font-weight: bold; color: #1f2937; }
-
-        .stat-label { font-size: 0.875rem; color: #6b7280; }
-
-        .teachers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-
-        .teacher-card { background: rgba(255, 255, 255, 0.9); border-radius: 1rem; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; }
-
-        .teacher-card:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-
-        .teacher-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
-
-        .teacher-avatar { width: 48px; height: 48px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
-
-        .teacher-name { font-size: 1.25rem; font-weight: bold; color: #1f2937; }
-
-        .teacher-subject { font-size: 0.875rem; color: #6b7280; }
-
-        .status-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; border: 1px solid; }
-
-        .status-office { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
-
-        .status-class { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
-
-        .status-away { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
-
-        .status-not-school { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
-
-        .login-modal, .dashboard-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-
-        .modal-content { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 2rem; border-radius: 1rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); width: 90%; max-width: 400px; }
-
-        .modal-header { text-align: center; margin-bottom: 2rem; }
-
-        .modal-icon { width: 64px; height: 64px; background: #e0e7ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: #4f46e5; }
-
-        .form-group { margin-bottom: 1rem; }
-
-        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
-
-        .form-input { width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; transition: border-color 0.3s ease; }
-
-        .form-input:focus { outline: none; border-color: #4f46e5; }
-
-        .error-message { background: #fee2e2; color: #991b1b; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.875rem; }
-
-        .current-status { background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; }
-
-        .status-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.5rem; }
-
-        .status-btn { 
-
-            padding: 0.75rem; 
-
-            border: 2px solid #d1d5db; 
-
-            background: white; 
-
-            border-radius: 0.5rem; 
-
-            cursor: pointer; 
-
-            display: flex;
-
-            align-items: center; 
-
-            justify-content: center; 
-
-            gap: 0.5rem; 
-
-            font-size: 0.875rem; 
-
-            transition: all 0.3s ease; 
-
-        }
-
-        .status-btn.active { background: #4f46e5; color: white; border-color: #4f46e5; }
-
-        .status-btn:hover { background: #f9fafb; }
-
-        .status-btn.active:hover { background: #4338ca; }
-
-        .hidden { display: none; }
-
-        @media (max-width: 768px) { .header h1 { font-size: 2rem; } .stats-grid { grid-template-columns: 1fr 1fr; } .teachers-grid { grid-template-columns: 1fr; } }
-
-    </style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>선생님 현황판 - 실시간 동기화 (Firebase)</title>
+
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="선생님현황판">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%91%A8%E2%80%8D%F0%9F%8F%AB%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%91%A8%E2%80%8D%F0%9F%8F%AB%3C/text%3E%3C/svg%3E">
+
+    <style>
+        /* CSS는 이전과 동일합니다. .status-btn의 display: flex; 포함 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #f1f5f9 0%, #dbeafe 100%); min-height: 100vh; padding: 1rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .header h1 { font-size: 2.5rem; color: #1f2937; margin-bottom: 0.5rem; }
+        .header p { color: #6b7280; font-size: 1rem; }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+        .btn-primary { background: #4f46e5; color: white; }
+        .btn-primary:hover { background: #4338ca; }
+        .btn-outline { background: transparent; border: 2px solid #d1d5db; color: #374151; }
+        .btn-outline:hover { background: #f9fafb; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: rgba(255, 255, 255, 0.8); padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); display: flex; align-items: center; gap: 1rem; }
+        .stat-icon { width: 48px; height: 48px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; }
+        .stat-count { font-size: 2rem; font-weight: bold; color: #1f2937; }
+        .stat-label { font-size: 0.875rem; color: #6b7280; }
+        .teachers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+        .teacher-card { background: rgba(255, 255, 255, 0.9); border-radius: 1rem; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .teacher-card:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .teacher-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .teacher-avatar { width: 48px; height: 48px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        .teacher-name { font-size: 1.25rem; font-weight: bold; color: #1f2937; }
+        .teacher-subject { font-size: 0.875rem; color: #6b7280; }
+        .status-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; border: 1px solid; }
+        .status-office { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        .status-class { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+        .status-away { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+        .status-not-school { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
+        .login-modal, .dashboard-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 2rem; border-radius: 1rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); width: 90%; max-width: 400px; }
+        .modal-header { text-align: center; margin-bottom: 2rem; }
+        .modal-icon { width: 64px; height: 64px; background: #e0e7ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: #4f46e5; }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
+        .form-input { width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; transition: border-color 0.3s ease; }
+        .form-input:focus { outline: none; border-color: #4f46e5; }
+        .error-message { background: #fee2e2; color: #991b1b; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.875rem; }
+        .current-status { background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; }
+        .status-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .status-btn {
+            padding: 0.75rem;
+            border: 2px solid #d1d5db;
+            background: white;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+        .status-btn.active { background: #4f46e5; color: white; border-color: #4f46e5; }
+        .status-btn:hover { background: #f9fafb; }
+        .status-btn.active:hover { background: #4338ca; }
+        .hidden { display: none; }
+        @media (max-width: 768px) { .header h1 { font-size: 2rem; } .stats-grid { grid-template-columns: 1fr 1fr; } .teachers-grid { grid-template-columns: 1fr; } }
+    </style>
 </head>
-
 <body>
-
-    <div class="container">
-
-        <div id="mainDashboard">
-
-            <div class="header">
-
-                <div>
-
-                    <h1>선생님 현황판</h1>
-
-                    <p>실시간 선생님 상태를 확인하세요</p>
-
-                </div>
-
-                <button class="btn btn-primary" id="loginButton">
-
-                    🔑 선생님 로그인
-
-                </button>
-
-            </div>
-
-
-
-            <div class="stats-grid" id="statsGrid">
-
-                </div>
-
-
-
-            <div class="teachers-grid" id="teachersGrid">
-
-                </div>
-
-        </div>
-
-
-
-        <div id="loginModal" class="login-modal hidden">
-
-            <div class="modal-content">
-
-                <div class="modal-header">
-
-                    <div class="modal-icon">🔑</div>
-
-                    <h2>선생님 로그인</h2>
-
-                    <p>이름과 비밀번호를 입력하세요</p>
-
-                </div>
-
-                <form id="loginForm"> 
-
-                    <div class="form-group">
-
-                        <label class="form-label">이름</label>
-
-                        <input type="text" class="form-input" id="loginName" placeholder="이름을 입력해주세요" required>
-
-                    </div>
-
-                    <div class="form-group">
-
-                        <label class="form-label">비밀번호</label>
-
-                        <input type="password" class="form-input" id="loginPassword" placeholder="비밀번호를 입력하세요" required>
-
-                    </div>
-
-                    <div id="loginError" class="error-message hidden"></div>
-
-                    <div style="display: flex; gap: 1rem;">
-
-                        <button type="submit" class="btn btn-primary" style="flex: 1;">로그인</button>
-
-                        <button type="button" class="btn btn-outline" id="loginCancelBtn" style="flex: 1;">돌아가기</button>
-
-                    </div>
-
-                </form>
-
-            </div>
-
-        </div>
-
-
-
-        <div id="teacherModal" class="dashboard-modal hidden">
-
-            <div class="modal-content">
-
-                <div class="modal-header">
-
-                    <div class="modal-icon">👨‍🏫</div>
-
-                    <h2 id="teacherName"></h2>
-
-                    <p id="teacherSubject"></p>
-
-                </div>
-
-                
-
-                <div class="current-status">
-
-                    <label class="form-label">현재 상태</label>
-
-                    <div id="currentStatus" style="display: flex; align-items: center; gap: 0.5rem; font-weight: bold; font-size: 1.1rem;">
-
-                    </div>
-
-                </div>
-
-
-
-                <div>
-
-                    <label class="form-label">상태 변경</label>
-
-                    <div class="status-buttons">
-
-                        <button class="status-btn" data-status="교무실에 있음">
-
-                            🏠 교무실
-
-                        </button>
-
-                        <button class="status-btn" data-status="수업 중">
-
-                            📚 수업 중
-
-                        </button>
-
-                        <button class="status-btn" data-status="부재중">
-
-                            ❌ 부재중
-
-                        </button>
-
-                        <button class="status-btn" data-status="학교에 없음">
-
-                            🚪 학교에 없음
-
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-
-                <button class="btn btn-danger" id="logoutBtn" style="width: 100%;">
-
-                    🚪 로그아웃
-
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-
-    <script type="module">
-
-        // --- Firebase SDK 초기화 부분 ---
-
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-
-
-
-        // 제공해주신 Firebase Configuration
-
-        const firebaseConfig = {
-
-            apiKey: "AIzaSyCr90aSlJxQjRNBMqLlVBunhBIHbyTPa88",
-
-            authDomain: "sssss-8ec7d.firebaseapp.com",
-
-            databaseURL: "https://sssss-8ec7d-default-rtdb.firebaseio.com",
-
-            projectId: "sssss-8ec7d",
-
-            storageBucket: "sssss-8ec7d.firebasestorage.app",
-
-            messagingSenderId: "1040806517474",
-
-            appId: "1:1040806517474:web:6e1f112297b6808b449cbb",
-
-            measurementId: "G-P1YRYXDY06"
-
-        };
-
-
-
-        // Firebase 앱을 초기화합니다.
-
-        const app = initializeApp(firebaseConfig);
-
-        // Realtime Database 인스턴스를 초기화합니다.
-
-        const database = getDatabase(app); 
-
-        // Firebase Realtime Database의 'teachers' 경로를 참조합니다.
-
-        const teachersRef = ref(database, 'teachers'); 
-
-
-
-        // --- 선생님 현황판 애플리케이션 로직 시작 ---
-
-
-
-        let teachers = []; // Firebase에서 데이터를 불러와 저장할 배열
-
-        let currentTeacher = null; // 현재 로그인된 선생님 정보
-
-
-
-        // 상태별 CSS 클래스와 아이콘 정의
-
-        const statusConfig = {
-
-            "교무실에 있음": { class: "status-office", icon: "🏠" },
-
-            "부재중": { class: "status-away", icon: "❌" },
-
-            "수업 중": { class: "status-class", icon: "📚" },
-
-            "학교에 없음": { class: "status-not-school", icon: "🚪" }
-
-        };
-
-
-
-        /**
-
-         * Realtime Database에서 데이터를 불러오고, UI를 렌더링하는 실시간 리스너를 설정합니다.
-
-         * 데이터가 변경될 때마다 이 함수가 호출되어 UI를 자동으로 업데이트됩니다.
-
-         */
-
-        function initializeFirebaseDataListener() {
-
-            onValue(teachersRef, (snapshot) => {
-
-                const data = snapshot.val(); // Firebase에서 현재 스냅샷의 데이터 가져오기
-
-
-
-                // 데이터가 없으면 초기 데이터를 Firebase에 저장
-
-                if (!data) {
-
-                    console.log("Firebase에 데이터가 없어 초기 데이터 설정 중...");
-
-                    const defaultTeachers = [
-
-                        { name: "이명용T", status: "교무실에 있음", password: "0101", subject: "수학" },
-
-                        { name: "정평강T", status: "교무실에 있음", password: "0101", subject: "물리" },
-
-                        { name: "조형일T", status: "교무실에 있음", password: "0101", subject: "사회" },
-
-                        { name: "김성현T", status: "교무실에 있음", password: "0101", subject: "역사" },
-
-                        { name: "박상희T", status: "교무실에 있음", password: "0101", subject: "생명" },
-
-                        { name: "이소라T", status: "교무실에 있음", password: "0101", subject: "국어" },
-
-                        { name: "서혁진T", status: "교무실에 있음", password: "0101", subject: "수학" },
-
-                        { name: "장건기T", status: "교무실에 있음", password: "0101", subject: "영어" },
-
-                    ];
-
-                    // Firebase에 초기 데이터를 한 번만 저장(덮어쓰기)
-
-                    set(teachersRef, defaultTeachers)
-
-                        .then(() => console.log("초기 데이터 Firebase에 저장 완료"))
-
-                        .catch((error) => console.error("초기 데이터 저장 오류:", error));
-
-                    teachers = defaultTeachers; // 초기 데이터로 현재 teachers 배열 업데이트
-
-                } else {
-
-                    // 데이터가 있으면 teachers 배열 업데이트
-
-                    teachers = data;
-
-                }
-
-                
-
-                // UI 렌더링 함수 호출
-
-                renderStats();
-
-                renderTeachers();
-
-
-
-                // 만약 현재 로그인된 선생님이 있다면, 그 선생님의 대시보드도 업데이트
-
-                if (currentTeacher && !document.getElementById('teacherModal').classList.contains('hidden')) {
-
-                    const updatedCurrentTeacher = teachers.find(t => t.name === currentTeacher.name);
-
-                    if (updatedCurrentTeacher) {
-
-                        currentTeacher = updatedCurrentTeacher; // 현재 선생님 정보도 최신으로 업데이트
-
-                        updateCurrentStatusDisplay();
-
-                        updateStatusButtons();
-
-                    }
-
-                }
-
-                console.log("Firebase 데이터 업데이트 감지 및 UI 갱신 완료");
-
-            }, (error) => {
-
-                console.error("Firebase 데이터 읽기 오류:", error);
-
-                // 오류 발생 시 사용자에게 메시지를 표시하거나 재시도 로직을 추가할 수 있습니다.
-
-            });
-
-        }
-
-
-
-        /**
-
-         * 현재 선생님 상태를 기반으로 통계 카드를 렌더링합니다.
-
-         */
-
-        function renderStats() {
-
-            const stats = {};
-
-            teachers.forEach(teacher => {
-
-                stats[teacher.status] = (stats[teacher.status] || 0) + 1;
-
-            });
-
-
-
-            const statsGrid = document.getElementById('statsGrid');
-
-            statsGrid.innerHTML = ''; // 기존 통계 카드 지우기
-
-
-
-            // 각 상태별로 통계 카드 생성 및 추가
-
-            Object.entries(statusConfig).forEach(([status, config]) => {
-
-                const count = stats[status] || 0;
-
-                const statCard = document.createElement('div');
-
-                statCard.className = 'stat-card';
-
-                statCard.innerHTML = `
-
-                    <div class="stat-icon ${config.class}">
-
-                        ${config.icon}
-
-                    </div>
-
-                    <div>
-
-                        <div class="stat-count">${count}</div>
-
-                        <div class="stat-label">${status}</div>
-
-                    </div>
-
-                `;
-
-                statsGrid.appendChild(statCard);
-
-            });
-
-        }
-
-
-
-        /**
-
-         * 메인 대시보드에 개별 선생님 카드를 렌더링합니다.
-
-         */
-
-        function renderTeachers() {
-
-            const teachersGrid = document.getElementById('teachersGrid');
-
-            teachersGrid.innerHTML = ''; // 기존 선생님 카드 지우기
-
-
-
-            // 각 선생님별로 카드 생성 및 추가
-
-            teachers.forEach(teacher => {
-
-                const config = statusConfig[teacher.status];
-
-                const teacherCard = document.createElement('div');
-
-                teacherCard.className = 'teacher-card';
-
-                teacherCard.innerHTML = `
-
-                    <div class="teacher-header">
-
-                        <div class="teacher-avatar">
-
-                            👨‍🏫
-
-                        </div>
-
-                        <div>
-
-                            <div class="teacher-name">${teacher.name}</div>
-
-                            <div class="teacher-subject">${teacher.subject}</div>
-
-                        </div>
-
-                    </div>
-
-                    <div class="status-badge ${config.class}">
-
-                        ${config.icon} ${teacher.status}
-
-                    </div>
-
-                `;
-
-                teachersGrid.appendChild(teacherCard);
-
-            });
-
-        }
-
-
-
-        // --- 로그인 모달 관련 함수 ---
-
-
-
-        /**
-
-         * 로그인 모달을 표시합니다.
-
-         */
-
-        function showLogin() {
-
-            document.getElementById('loginModal').classList.remove('hidden');
-
-            document.getElementById('loginName').focus(); // 이름 입력 필드에 포커스
-
-            document.getElementById('loginError').classList.add('hidden'); // 오류 메시지 숨기기
-
-            document.getElementById('loginName').value = ''; // 필드 초기화
-
-            document.getElementById('loginPassword').value = ''; // 필드 초기화
-
-        }
-
-
-
-        /**
-
-         * 로그인 모달을 숨기고 입력 필드를 초기화합니다.
-
-         */
-
-        function hideLogin() {
-
-            document.getElementById('loginModal').classList.add('hidden');
-
-            document.getElementById('loginError').classList.add('hidden'); // 오류 메시지 숨기기
-
-            document.getElementById('loginName').value = '';
-
-            document.getElementById('loginPassword').value = '';
-
-        }
-
-
-
-        /**
-
-         * 로그인 폼 제출을 처리합니다.
-
-         * @param {Event} event - 폼 제출 이벤트 객체.
-
-         */
-
-        function handleLogin(event) {
-
-            event.preventDefault(); // 기본 폼 제출 동작 방지
-
-            const name = document.getElementById('loginName').value.toLowerCase().trim();
-
-            const password = document.getElementById('loginPassword').value;
-
-
-
-            // 입력된 이름과 비밀번호로 선생님을 찾습니다.
-
-            const teacher = teachers.find(t => {
-
-                const teacherName = t.name.toLowerCase();
-
-                // 'T' 접미사 유무에 관계없이 이름 매칭을 허용합니다. (예: "이명용" 또는 "이명용t")
-
-                const nameMatch = teacherName === name || teacherName.replace('t', '') === name;
-
-                return nameMatch && t.password === password;
-
-            });
-
-
-
-            if (teacher) {
-
-                currentTeacher = teacher; // 로그인된 선생님 정보 저장
-
-                hideLogin(); // 로그인 모달 숨기기
-
-                showTeacherDashboard(); // 선생님 대시보드 표시
-
-            } else {
-
-                // 로그인 실패 시 오류 메시지 표시
-
-                const errorDiv = document.getElementById('loginError');
-
-                errorDiv.textContent = '이름 또는 비밀번호가 올바르지 않습니다.';
-
-                errorDiv.classList.remove('hidden');
-
-            }
-
-        }
-
-
-
-        // --- 선생님 대시보드 모달 관련 함수 ---
-
-
-
-        /**
-
-         * 선생님 전용 대시보드 모달을 표시합니다.
-
-         */
-
-        function showTeacherDashboard() {
-
-            if (!currentTeacher) return; // 로그인된 선생님이 없으면 아무것도 하지 않음
-
-
-
-            document.getElementById('teacherName').textContent = currentTeacher.name + '님';
-
-            document.getElementById('teacherSubject').textContent = currentTeacher.subject + ' 담당';
-
-            updateCurrentStatusDisplay(); // 현재 상태를 화면에 업데이트
-
-            updateStatusButtons();       // 상태 변경 버튼 활성화 상태 업데이트
-
-            document.getElementById('teacherModal').classList.remove('hidden');
-
-        }
-
-
-
-        /**
-
-         * 선생님 대시보드의 현재 상태 표시를 업데이트합니다.
-
-         */
-
-        function updateCurrentStatusDisplay() {
-
-            const config = statusConfig[currentTeacher.status];
-
-            document.getElementById('currentStatus').innerHTML = `
-
-                ${config.icon} ${currentTeacher.status}
-
-            `;
-
-        }
-
-
-
-        /**
-
-         * 선생님 대시보드에서 현재 상태에 해당하는 버튼을 활성화(표시)합니다.
-
-         */
-
-        function updateStatusButtons() {
-
-            const buttons = document.querySelectorAll('.status-btn');
-
-            buttons.forEach(btn => {
-
-                btn.classList.remove('active'); // 모든 버튼의 활성화 클래스 제거
-
-                
-
-                const buttonStatus = btn.getAttribute('data-status');
-
-                if (currentTeacher.status === buttonStatus) {
-
-                    btn.classList.add('active'); 
-
-                }
-
-            });
-
-        }
-
-
-
-        /**
-
-         * 로그인한 선생님의 상태를 업데이트하고 Firebase Realtime Database에 저장합니다.
-
-         * 이 함수가 호출되면 Firebase에 데이터가 변경되고, 'onValue' 리스너를 통해 
-
-         * 모든 연결된 클라이언트의 UI가 자동으로 업데이트됩니다.
-
-         * @param {string} newStatus - 새로 설정할 상태.
-
-         */
-
-        function updateStatus(newStatus) {
-
-            // 현재 로그인된 선생님의 인덱스를 찾습니다.
-
-            const teacherIndex = teachers.findIndex(t => t.name === currentTeacher.name);
-
-            if (teacherIndex !== -1) {
-
-                teachers[teacherIndex].status = newStatus; // 로컬 teachers 배열의 상태 업데이트
-
-                currentTeacher.status = newStatus;         // 현재 로그인된 선생님 객체의 상태도 업데이트
-
-
-
-                // Firebase Realtime Database에 업데이트된 teachers 배열 전체를 저장합니다.
-
-                set(teachersRef, teachers) 
-
-                    .then(() => {
-
-                        console.log("상태 업데이트 및 Firebase 저장 성공", newStatus); // 성공 로그에 newStatus 추가
-
-                    })
-
-                    .catch((error) => console.error("상태 업데이트 및 Firebase 저장 오류:", error));
-
-                
-
-                // 현재 탭의 UI를 즉시 업데이트 (Firebase 리스너가 다른 탭들을 업데이트 해줄 것입니다.)
-
-                updateCurrentStatusDisplay();
-
-                updateStatusButtons();
-
-            } else {
-
-                console.error("현재 로그인된 선생님 정보를 teachers 배열에서 찾을 수 없습니다:", currentTeacher);
-
-            }
-
-        }
-
-
-
-        /**
-
-         * 현재 로그인된 선생님을 로그아웃하고 대시보드 모달을 숨깁니다.
-
-         */
-
-        function logout() {
-
-            currentTeacher = null; // 로그인된 선생님 정보 초기화
-
-            document.getElementById('teacherModal').classList.add('hidden');
-
-            // 보안을 위해 로그인 필드도 초기화
-
-            document.getElementById('loginName').value = '';
-
-            document.getElementById('loginPassword').value = '';
-
-            console.log("로그아웃되었습니다."); // 로그아웃 확인용 로그
-
-        }
-
-
-
-        // --- 초기 로드 및 이벤트 리스너 설정 ---
-
-
-
-        document.addEventListener('DOMContentLoaded', () => {
-
-            // 페이지 로드 시 Firebase 데이터 리스너를 설정하여 실시간 동기화를 시작합니다.
-
-            initializeFirebaseDataListener(); 
-
-
-
-            // 로그인 버튼 이벤트 리스너
-
-            const loginButton = document.getElementById('loginButton');
-
-            if (loginButton) {
-
-                loginButton.addEventListener('click', showLogin);
-
-                console.log("로그인 버튼에 클릭 리스너가 성공적으로 연결되었습니다."); 
-
-            } else {
-
-                console.error("ID 'loginButton'을 가진 로그인 버튼을 찾을 수 없습니다. HTML을 확인해주세요.");
-
-            }
-
-
-
-            // 로그인 폼 제출 이벤트 리스너
-
-            const loginForm = document.getElementById('loginForm');
-
-            if (loginForm) {
-
-                loginForm.addEventListener('submit', handleLogin);
-
-            }
-
-
-
-            // 로그인 취소 버튼 이벤트 리스너
-
-            const loginCancelBtn = document.getElementById('loginCancelBtn');
-
-            if (loginCancelBtn) {
-
-                loginCancelBtn.addEventListener('click', hideLogin);
-
-            }
-
-
-
-            // Enter 키 입력 시 로그인 처리 (현재 로그인 모달이 열려 있을 때만)
-
-            document.addEventListener('keydown', function(event) {
-
-                const loginModal = document.getElementById('loginModal');
-
-                if (event.key === 'Enter' && !loginModal.classList.contains('hidden')) {
-
-                    // 폼 자체에 submit 이벤트 리스너가 있으므로, 여기서는 submit을 트리거합니다.
-
-                    // 이렇게 하면 handleLogin 함수가 직접 호출되는 것과 동일한 효과를 냅니다.
-
-                    loginForm.dispatchEvent(new Event('submit'));
-
-                }
-
-            });
-
-
-
-            // **상태 변경 버튼 이벤트 리스너**
-
-            const statusButtons = document.querySelectorAll('.status-btn');
-
-            statusButtons.forEach(btn => {
-
-                btn.addEventListener('click', () => {
-
-                    const newStatus = btn.getAttribute('data-status');
-
-                    if (newStatus) {
-
-                        updateStatus(newStatus);
-
-                    } else {
-
-                        console.warn("상태 변경 버튼에 'data-status' 속성이 없습니다:", btn);
-
-                    }
-
-                });
-
-            });
-
-
-
-            // **로그아웃 버튼 이벤트 리스너**
-
-            const logoutButton = document.getElementById('logoutBtn');
-
-            if (logoutButton) {
-
-                logoutButton.addEventListener('click', logout);
-
-                console.log("로그아웃 버튼에 클릭 리스너가 성공적으로 연결되었습니다.");
-
-            } else {
-
-                console.error("ID 'logoutBtn'을 가진 로그아웃 버튼을 찾을 수 없습니다. HTML을 확인해주세요.");
-
-            }
-
-        });
-
-    </script>
-
+    <div class="container">
+        <div id="mainDashboard">
+            <div class="header">
+                <div>
+                    <h1>선생님 현황판</h1>
+                    <p>실시간 선생님 상태를 확인하세요</p>
+                </div>
+                <button class="btn btn-primary" id="loginButton">
+                    🔑 선생님 로그인
+                </button>
+            </div>
+
+            <div class="stats-grid" id="statsGrid">
+                </div>
+
+            <div class="teachers-grid" id="teachersGrid">
+                </div>
+        </div>
+
+        <div id="loginModal" class="login-modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-icon">🔑</div>
+                    <h2>선생님 로그인</h2>
+                    <p>이름과 비밀번호를 입력하세요</p>
+                </div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label">이름</label>
+                        <input type="text" class="form-input" id="loginName" placeholder="이름을 입력해주세요" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">비밀번호</label>
+                        <input type="password" class="form-input" id="loginPassword" placeholder="비밀번호를 입력하세요" required>
+                    </div>
+                    <div id="loginError" class="error-message hidden"></div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">로그인</button>
+                        <button type="button" class="btn btn-outline" id="loginCancelBtn" style="flex: 1;">돌아가기</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="teacherModal" class="dashboard-modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-icon">👨‍🏫</div>
+                    <h2 id="teacherName"></h2>
+                    <p id="teacherSubject"></p>
+                </div>
+
+                <div class="current-status">
+                    <label class="form-label">현재 상태</label>
+                    <div id="currentStatus" style="display: flex; align-items: center; gap: 0.5rem; font-weight: bold; font-size: 1.1rem;">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label">상태 변경</label>
+                    <div class="status-buttons">
+                        <button class="status-btn" data-status="교무실에 있음">
+                            🏠 교무실
+                        </button>
+                        <button class="status-btn" data-status="수업 중">
+                            📚 수업 중
+                        </button>
+                        <button class="status-btn" data-status="부재중">
+                            ❌ 부재중
+                        </button>
+                        <button class="status-btn" data-status="학교에 없음">
+                            🚪 학교에 없음
+                        </button>
+                    </div>
+                </div>
+
+                <button class="btn btn-danger" id="logoutBtn" style="width: 100%;">
+                    🚪 로그아웃
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- Firebase SDK 초기화 부분 ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+        // 제공해주신 Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCr90aSlJxQjRNBMqLlVBunhBIHbyTPa88",
+            authDomain: "sssss-8ec7d.firebaseapp.com",
+            databaseURL: "https://sssss-8ec7d-default-rtdb.firebaseio.com",
+            projectId: "sssss-8ec7d",
+            storageBucket: "sssss-8ec7d.firebasestorage.app",
+            messagingSenderId: "1040806517474",
+            appId: "1:1040806517474:web:6e1f112297b6808b449cbb",
+            measurementId: "G-P1YRYXDY06"
+        };
+
+        // Firebase 앱을 초기화합니다.
+        const app = initializeApp(firebaseConfig);
+        // Realtime Database 인스턴스를 초기화합니다.
+        const database = getDatabase(app);
+        // Firebase Realtime Database의 'teachers' 경로를 참조합니다.
+        const teachersRef = ref(database, 'teachers');
+
+        // --- 선생님 현황판 애플리케이션 로직 시작 ---
+
+        let teachers = []; // Firebase에서 데이터를 불러와 저장할 배열
+        let currentTeacher = null; // 현재 로그인된 선생님 정보
+
+        // 상태별 CSS 클래스와 아이콘 정의
+        const statusConfig = {
+            "교무실에 있음": { class: "status-office", icon: "🏠" },
+            "부재중": { class: "status-away", icon: "❌" },
+            "수업 중": { class: "status-class", icon: "📚" },
+            "학교에 없음": { class: "status-not-school", icon: "🚪" }
+        };
+
+        /**
+         * Realtime Database에서 데이터를 불러오고, UI를 렌더링하는 실시간 리스너를 설정합니다.
+         * 데이터가 변경될 때마다 이 함수가 호출되어 UI를 자동으로 업데이트됩니다.
+         */
+        function initializeFirebaseDataListener() {
+            onValue(teachersRef, (snapshot) => {
+                const data = snapshot.val(); // Firebase에서 현재 스냅샷의 데이터 가져오기
+
+                // 데이터가 없으면 초기 데이터를 Firebase에 저장
+                if (!data) {
+                    console.log("Firebase에 데이터가 없어 초기 데이터 설정 중...");
+                    const defaultTeachers = [
+                        { name: "이명용T", status: "교무실에 있음", password: "0101", subject: "수학" },
+                        { name: "정평강T", status: "교무실에 있음", password: "0101", subject: "물리" },
+                        { name: "조형일T", status: "교무실에 있음", password: "0101", subject: "사회" },
+                        { name: "김성현T", status: "교무실에 있음", password: "0101", subject: "역사" },
+                        { name: "박상희T", status: "교무실에 있음", password: "0101", subject: "생명" },
+                        { name: "이소라T", status: "교무실에 있음", password: "0101", subject: "국어" },
+                        { name: "서혁진T", status: "교무실에 있음", password: "0101", subject: "수학" },
+                        { name: "장건기T", status: "교무실에 있음", password: "0101", subject: "영어" },
+                    ];
+                    // Firebase에 초기 데이터를 한 번만 저장(덮어쓰기)
+                    set(teachersRef, defaultTeachers)
+                        .then(() => console.log("초기 데이터 Firebase에 저장 완료"))
+                        .catch((error) => console.error("초기 데이터 저장 오류:", error));
+                    teachers = defaultTeachers; // 초기 데이터로 현재 teachers 배열 업데이트
+                } else {
+                    // 데이터가 있으면 teachers 배열 업데이트
+                    teachers = data;
+                }
+
+                // UI 렌더링 함수 호출
+                renderStats();
+                renderTeachers();
+
+                // 만약 현재 로그인된 선생님이 있다면, 그 선생님의 대시보드도 업데이트
+                if (currentTeacher && !document.getElementById('teacherModal').classList.contains('hidden')) {
+                    const updatedCurrentTeacher = teachers.find(t => t.name === currentTeacher.name);
+                    if (updatedCurrentTeacher) {
+                        currentTeacher = updatedCurrentTeacher; // 현재 선생님 정보도 최신으로 업데이트
+                        updateCurrentStatusDisplay();
+                        updateStatusButtons();
+                    }
+                }
+                console.log("Firebase 데이터 업데이트 감지 및 UI 갱신 완료");
+            }, (error) => {
+                console.error("Firebase 데이터 읽기 오류:", error);
+                // 오류 발생 시 사용자에게 메시지를 표시하거나 재시도 로직을 추가할 수 있습니다.
+            });
+        }
+
+        /**
+         * 현재 선생님 상태를 기반으로 통계 카드를 렌더링합니다.
+         */
+        function renderStats() {
+            const stats = {};
+            teachers.forEach(teacher => {
+                stats[teacher.status] = (stats[teacher.status] || 0) + 1;
+            });
+
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = ''; // 기존 통계 카드 지우기
+
+            // 각 상태별로 통계 카드 생성 및 추가
+            Object.entries(statusConfig).forEach(([status, config]) => {
+                const count = stats[status] || 0;
+                const statCard = document.createElement('div');
+                statCard.className = 'stat-card';
+                statCard.innerHTML = `
+                    <div class="stat-icon ${config.class}">
+                        ${config.icon}
+                    </div>
+                    <div>
+                        <div class="stat-count">${count}</div>
+                        <div class="stat-label">${status}</div>
+                    </div>
+                `;
+                statsGrid.appendChild(statCard);
+            });
+        }
+
+        /**
+         * 메인 대시보드에 개별 선생님 카드를 렌더링합니다.
+         */
+        function renderTeachers() {
+            const teachersGrid = document.getElementById('teachersGrid');
+            teachersGrid.innerHTML = ''; // 기존 선생님 카드 지우기
+
+            // 각 선생님별로 카드 생성 및 추가
+            teachers.forEach(teacher => {
+                const config = statusConfig[teacher.status];
+                const teacherCard = document.createElement('div');
+                teacherCard.className = 'teacher-card';
+                teacherCard.innerHTML = `
+                    <div class="teacher-header">
+                        <div class="teacher-avatar">
+                            👨‍🏫
+                        </div>
+                        <div>
+                            <div class="teacher-name">${teacher.name}</div>
+                            <div class="teacher-subject">${teacher.subject}</div>
+                        </div>
+                    </div>
+                    <div class="status-badge ${config.class}">
+                        ${config.icon} ${teacher.status}
+                    </div>
+                `;
+                teachersGrid.appendChild(teacherCard);
+            });
+        }
+
+        // --- 로그인 모달 관련 함수 ---
+
+        /**
+         * 로그인 모달을 표시합니다.
+         */
+        function showLogin() {
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('loginName').focus(); // 이름 입력 필드에 포커스
+            document.getElementById('loginError').classList.add('hidden'); // 오류 메시지 숨기기
+            document.getElementById('loginName').value = ''; // 필드 초기화
+            document.getElementById('loginPassword').value = ''; // 필드 초기화
+        }
+
+        /**
+         * 로그인 모달을 숨기고 입력 필드를 초기화합니다.
+         */
+        function hideLogin() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('loginError').classList.add('hidden'); // 오류 메시지 숨기기
+            document.getElementById('loginName').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        /**
+         * 로그인 폼 제출을 처리합니다.
+         * @param {Event} event - 폼 제출 이벤트 객체.
+         */
+        function handleLogin(event) {
+            event.preventDefault(); // 기본 폼 제출 동작 방지
+            const name = document.getElementById('loginName').value.toLowerCase().trim();
+            const password = document.getElementById('loginPassword').value;
+
+            // 입력된 이름과 비밀번호로 선생님을 찾습니다.
+            const teacher = teachers.find(t => {
+                const teacherName = t.name.toLowerCase();
+                // 'T' 접미사 유무에 관계없이 이름 매칭을 허용합니다. (예: "이명용" 또는 "이명용t")
+                const nameMatch = teacherName === name || teacherName.replace('t', '') === name;
+                return nameMatch && t.password === password;
+            });
+
+            if (teacher) {
+                currentTeacher = teacher; // 로그인된 선생님 정보 저장
+                hideLogin(); // 로그인 모달 숨기기
+                showTeacherDashboard(); // 선생님 대시보드 표시
+            } else {
+                // 로그인 실패 시 오류 메시지 표시
+                const errorDiv = document.getElementById('loginError');
+                errorDiv.textContent = '이름 또는 비밀번호가 올바르지 않습니다.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        // --- 선생님 대시보드 모달 관련 함수 ---
+
+        /**
+         * 선생님 전용 대시보드 모달을 표시합니다.
+         */
+        function showTeacherDashboard() {
+            if (!currentTeacher) return; // 로그인된 선생님이 없으면 아무것도 하지 않음
+
+            document.getElementById('teacherName').textContent = currentTeacher.name + '님';
+            document.getElementById('teacherSubject').textContent = currentTeacher.subject + ' 담당';
+            updateCurrentStatusDisplay(); // 현재 상태를 화면에 업데이트
+            updateStatusButtons();       // 상태 변경 버튼 활성화 상태 업데이트
+            document.getElementById('teacherModal').classList.remove('hidden');
+        }
+
+        /**
+         * 선생님 대시보드의 현재 상태 표시를 업데이트합니다.
+         */
+        function updateCurrentStatusDisplay() {
+            const config = statusConfig[currentTeacher.status];
+            document.getElementById('currentStatus').innerHTML = `
+                ${config.icon} ${currentTeacher.status}
+            `;
+        }
+
+        /**
+         * 선생님 대시보드에서 현재 상태에 해당하는 버튼을 활성화(표시)합니다.
+         */
+        function updateStatusButtons() {
+            const buttons = document.querySelectorAll('.status-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active'); // 모든 버튼의 활성화 클래스 제거
+
+                const buttonStatus = btn.getAttribute('data-status');
+                if (currentTeacher.status === buttonStatus) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        /**
+         * 로그인한 선생님의 상태를 업데이트하고 Firebase Realtime Database에 저장합니다.
+         * 이 함수가 호출되면 Firebase에 데이터가 변경되고, 'onValue' 리스너를 통해
+         * 모든 연결된 클라이언트의 UI가 자동으로 업데이트됩니다.
+         * @param {string} newStatus - 새로 설정할 상태.
+         */
+        function updateStatus(newStatus) {
+            // 현재 로그인된 선생님의 인덱스를 찾습니다.
+            const teacherIndex = teachers.findIndex(t => t.name === currentTeacher.name);
+            if (teacherIndex !== -1) {
+                teachers[teacherIndex].status = newStatus; // 로컬 teachers 배열의 상태 업데이트
+                currentTeacher.status = newStatus;          // 현재 로그인된 선생님 객체의 상태도 업데이트
+
+                // Firebase Realtime Database에 업데이트된 teachers 배열 전체를 저장합니다.
+                set(teachersRef, teachers)
+                    .then(() => {
+                        console.log("상태 업데이트 및 Firebase 저장 성공", newStatus); // 성공 로그에 newStatus 추가
+                    })
+                    .catch((error) => console.error("상태 업데이트 및 Firebase 저장 오류:", error));
+
+                // 현재 탭의 UI를 즉시 업데이트 (Firebase 리스너가 다른 탭들을 업데이트 해줄 것입니다.)
+                updateCurrentStatusDisplay();
+                updateStatusButtons();
+            } else {
+                console.error("현재 로그인된 선생님 정보를 teachers 배열에서 찾을 수 없습니다:", currentTeacher);
+            }
+        }
+
+        /**
+         * 현재 로그인된 선생님을 로그아웃하고 대시보드 모달을 숨깁니다.
+         */
+        function logout() {
+            currentTeacher = null; // 로그인된 선생님 정보 초기화
+            document.getElementById('teacherModal').classList.add('hidden');
+            // 보안을 위해 로그인 필드도 초기화
+            document.getElementById('loginName').value = '';
+            document.getElementById('loginPassword').value = '';
+            console.log("로그아웃되었습니다."); // 로그아웃 확인용 로그
+        }
+
+        // --- 초기 로드 및 이벤트 리스너 설정 ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 페이지 로드 시 Firebase 데이터 리스너를 설정하여 실시간 동기화를 시작합니다.
+            initializeFirebaseDataListener();
+
+            // 로그인 버튼 이벤트 리스너
+            const loginButton = document.getElementById('loginButton');
+            if (loginButton) {
+                loginButton.addEventListener('click', showLogin);
+                console.log("로그인 버튼에 클릭 리스너가 성공적으로 연결되었습니다.");
+            } else {
+                console.error("ID 'loginButton'을 가진 로그인 버튼을 찾을 수 없습니다. HTML을 확인해주세요.");
+            }
+
+            // 로그인 폼 제출 이벤트 리스너
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleLogin);
+            }
+
+            // 로그인 취소 버튼 이벤트 리스너
+            const loginCancelBtn = document.getElementById('loginCancelBtn');
+            if (loginCancelBtn) {
+                loginCancelBtn.addEventListener('click', hideLogin);
+            }
+
+            // Enter 키 입력 시 로그인 처리 (현재 로그인 모달이 열려 있을 때만)
+            document.addEventListener('keydown', function(event) {
+                const loginModal = document.getElementById('loginModal');
+                if (event.key === 'Enter' && !loginModal.classList.contains('hidden')) {
+                    // 폼 자체에 submit 이벤트 리스너가 있으므로, 여기서는 submit을 트리거합니다.
+                    // 이렇게 하면 handleLogin 함수가 직접 호출되는 것과 동일한 효과를 냅니다.
+                    loginForm.dispatchEvent(new Event('submit'));
+                }
+            });
+
+            // **상태 변경 버튼 이벤트 리스너**
+            const statusButtons = document.querySelectorAll('.status-btn');
+            statusButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const newStatus = btn.getAttribute('data-status');
+                    if (newStatus) {
+                        updateStatus(newStatus);
+                    } else {
+                        console.warn("상태 변경 버튼에 'data-status' 속성이 없습니다:", btn);
+                    }
+                });
+            });
+
+            // **로그아웃 버튼 이벤트 리스너**
+            const logoutButton = document.getElementById('logoutBtn');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', logout);
+                console.log("로그아웃 버튼에 클릭 리스너가 성공적으로 연결되었습니다.");
+            } else {
+                console.error("ID 'logoutBtn'을 가진 로그아웃 버튼을 찾을 수 없습니다. HTML을 확인해주세요.");
+            }
+        });
+    </script>
 </body>
-
 </html>
