@@ -13,7 +13,6 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%8F%EF%B8%8F%3C/text%3E%3C/svg%3E">
 
     <style>
-        /* CSS는 이전과 동일합니다. .status-btn의 display: flex; 포함 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #f1f5f9 0%, #dbeafe 100%); min-height: 100vh; padding: 1rem; }
         .container { max-width: 1200px; margin: 0 auto; }
@@ -33,7 +32,7 @@
         .stat-count { font-size: 2rem; font-weight: bold; color: #1f2937; }
         .stat-label { font-size: 0.875rem; color: #6b7280; }
         .teachers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-        .teacher-card { background: rgba(255, 255, 255, 0.9); border-radius: 1rem; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer; } /* cursor: pointer 추가 */
+        .teacher-card { background: rgba(255, 255, 255, 0.9); border-radius: 1rem; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer; }
         .teacher-card:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
         .teacher-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
         .teacher-avatar {
@@ -46,7 +45,7 @@
             justify-content: center;
             color: white;
             font-weight: bold;
-            font-size: 24px; /* 아이콘이 잘 보이도록 크기 조정 */
+            font-size: 24px;
         }
         .teacher-name { font-size: 1.25rem; font-weight: bold; color: #1f2937; }
         .teacher-subject { font-size: 0.875rem; color: #6b7280; }
@@ -111,7 +110,34 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: relative; /* 삭제 버튼 위치 조정을 위해 추가 */
+            padding-right: 60px; /* 삭제 버튼 공간 확보 */
         }
+        .question-meta .delete-button-container {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .delete-button {
+            background: #ef4444; /* red-500 */
+            color: white;
+            border: none;
+            border-radius: 0.375rem; /* rounded-md */
+            padding: 0.375rem 0.75rem; /* px-3 py-1.5 */
+            font-size: 0.75rem; /* text-xs */
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            margin-left: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .delete-button:hover {
+            background: #dc2626; /* red-600 */
+        }
+
         .question-text {
             font-size: 1rem;
             color: #374151;
@@ -175,10 +201,10 @@
             </div>
 
             <div class="stats-grid" id="statsGrid">
-            </div>
+                </div>
 
             <div class="teachers-grid" id="teachersGrid">
-            </div>
+                </div>
         </div>
 
         <div id="loginModal" class="login-modal hidden">
@@ -238,7 +264,7 @@
                     </div>
                 </div>
                 
-                <button class="btn btn-danger" id="logoutBtn" style="width: 100%;">
+                <button class="btn btn-danger" id="logoutBtn" style="width: 100%; margin-top: 1rem;">
                     🚪 로그아웃
                 </button>
             </div>
@@ -272,14 +298,30 @@
                 </form>
             </div>
         </div>
+
+        <div id="viewQuestionsModal" class="login-modal hidden">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <div class="modal-icon">📜</div>
+                    <h2 id="viewQuestionsTeacherName"></h2>
+                    <p>선생님께 남겨진 질문들을 확인하세요.</p>
+                </div>
+                <div id="publicQuestionsList" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                    </div>
+                <div id="publicQuestionsEmpty" class="error-message hidden" style="text-align: center; margin-top: 1rem;">아직 이 선생님에게 온 질문이 없습니다.</div>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button type="button" class="btn btn-outline" id="viewQuestionsCloseBtn" style="flex: 1;">닫기</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="module">
-        // --- Firebase SDK 초기화 부분 ---
+        // Firebase SDK 초기화 부분
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, push, update } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js"; // push, update 추가
+        import { getDatabase, ref, set, onValue, push, update, remove } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-        // 제공해주신 Firebase Configuration
+        // Firebase Configuration (제공해주신 것과 동일)
         const firebaseConfig = {
             apiKey: "AIzaSyCr90aSlJxQjRNBMqLlVBunhBIHbyTPa88",
             authDomain: "sssss-8ec7d.firebaseapp.com",
@@ -291,21 +333,18 @@
             measurementId: "G-P1YRYXDY06"
         };
 
-        // Firebase 앱을 초기화합니다.
+        // Firebase 앱 초기화 및 데이터베이스 인스턴스 참조
         const app = initializeApp(firebaseConfig);
-        // Realtime Database 인스턴스를 초기화합니다.
         const database = getDatabase(app);
-        // Firebase Realtime Database의 'teachers' 경로를 참조합니다.
         const teachersRef = ref(database, 'teachers');
-        // Firebase Realtime Database의 'questions' 경로를 참조합니다. (추가)
         const questionsRef = ref(database, 'questions');
 
-        // --- 선생님 현황판 애플리케이션 로직 시작 ---
-
-        let teachers = []; // Firebase에서 데이터를 불러와 저장할 배열
-        let questions = []; // Firebase에서 질문 데이터를 불러와 저장할 배열 (추가)
+        // 애플리케이션 상태 변수
+        let teachers = [];
+        let questions = [];
         let currentTeacher = null; // 현재 로그인된 선생님 정보
-        let selectedTeacherForQuestion = null; // 질문을 남길 선생님 (추가)
+        let selectedTeacherForQuestion = null; // 학생 질문 모달에 사용될 선생님
+        let selectedTeacherForView = null; // 질문 리스트 보기 모달에 사용될 선생님
 
         // 상태별 CSS 클래스와 아이콘 정의
         const statusConfig = {
@@ -320,10 +359,9 @@
          * 데이터가 변경될 때마다 이 함수가 호출되어 UI를 자동으로 업데이트됩니다.
          */
         function initializeFirebaseDataListener() {
+            // 선생님 데이터 리스너
             onValue(teachersRef, (snapshot) => {
-                const data = snapshot.val(); // Firebase에서 현재 스냅샷의 데이터 가져오기
-
-                // 데이터가 없으면 초기 데이터를 Firebase에 저장
+                const data = snapshot.val();
                 if (!data) {
                     console.log("Firebase에 데이터가 없어 초기 데이터 설정 중...");
                     const defaultTeachers = [
@@ -336,46 +374,43 @@
                         { name: "서혁진T", status: "교무실에 있음", password: "0101", subject: "수학" },
                         { name: "장건기T", status: "교무실에 있음", password: "0101", subject: "영어" },
                     ];
-                    // Firebase에 초기 데이터를 한 번만 저장(덮어쓰기)
                     set(teachersRef, defaultTeachers)
                         .then(() => console.log("초기 데이터 Firebase에 저장 완료"))
                         .catch((error) => console.error("초기 데이터 저장 오류:", error));
-                    teachers = defaultTeachers; // 초기 데이터로 현재 teachers 배열 업데이트
+                    teachers = defaultTeachers;
                 } else {
-                    // 데이터가 있으면 teachers 배열 업데이트
                     teachers = data;
                 }
-
-                // UI 렌더링 함수 호출
                 renderStats();
-                renderTeachers(); // 선생님 카드 렌더링 시 클릭 이벤트 리스너 추가됨
-
-                // 만약 현재 로그인된 선생님이 있다면, 그 선생님의 대시보드도 업데이트
+                renderTeachers();
                 if (currentTeacher && !document.getElementById('teacherModal').classList.contains('hidden')) {
                     const updatedCurrentTeacher = teachers.find(t => t.name === currentTeacher.name);
                     if (updatedCurrentTeacher) {
-                        currentTeacher = updatedCurrentTeacher; // 현재 선생님 정보도 최신으로 업데이트
+                        currentTeacher = updatedCurrentTeacher;
                         updateCurrentStatusDisplay();
                         updateStatusButtons();
                     }
                 }
-                console.log("Firebase 데이터 업데이트 감지 및 UI 갱신 완료");
+                console.log("Firebase 선생님 데이터 업데이트 감지 및 UI 갱신 완료");
             }, (error) => {
-                console.error("Firebase 데이터 읽기 오류:", error);
-                // 오류 발생 시 사용자에게 메시지를 표시하거나 재시도 로직을 추가할 수 있습니다.
+                console.error("Firebase 선생님 데이터 읽기 오류:", error);
             });
 
-            // 질문 데이터 리스너 추가 (추가)
+            // 질문 데이터 리스너
             onValue(questionsRef, (snapshot) => {
                 const data = snapshot.val();
-                // Firebase 객체를 배열로 변환하고 고유 ID를 포함시킵니다.
                 questions = data ? Object.entries(data).map(([key, value]) => ({ id: key, ...value })) : [];
-                // 최신 질문이 위로 오도록 정렬 (timestamp 기준 내림차순)
-                questions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); 
-
+                questions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // 최신 질문이 위로 오도록 정렬
+                
+                // 로그인한 선생님 대시보드 질문 목록 업데이트
                 if (currentTeacher && !document.getElementById('teacherModal').classList.contains('hidden')) {
-                    renderTeacherQuestions(); // 선생님 대시보드 질문 목록 업데이트
+                    renderTeacherQuestions(); 
                 }
+                // 질문 리스트 보기 모달이 열려있으면 업데이트
+                if (selectedTeacherForView && !document.getElementById('viewQuestionsModal').classList.contains('hidden')) {
+                     renderPublicQuestions(selectedTeacherForView.name);
+                }
+
                 console.log("Firebase 질문 데이터 업데이트 감지 및 UI 갱신 완료");
             }, (error) => {
                 console.error("Firebase 질문 데이터 읽기 오류:", error);
@@ -392,9 +427,8 @@
             });
 
             const statsGrid = document.getElementById('statsGrid');
-            statsGrid.innerHTML = ''; // 기존 통계 카드 지우기
+            statsGrid.innerHTML = '';
 
-            // 각 상태별로 통계 카드 생성 및 추가
             Object.entries(statusConfig).forEach(([status, config]) => {
                 const count = stats[status] || 0;
                 const statCard = document.createElement('div');
@@ -412,9 +446,9 @@
             });
         }
 
-        // 과목별 아이콘 정의 (수학은 '+'로 변경)
+        // 과목별 아이콘 정의
         const subjectIcons = {
-            "수학": "➕", // 수학 아이콘을 더하기(+)로 변경
+            "수학": "➕",
             "물리": "⚛️",
             "사회": "🏛️",
             "역사": "📜",
@@ -424,19 +458,19 @@
         };
 
         /**
-         * 메인 대시보드에 개별 선생님 카드를 렌더링합니다. (수정: 클릭 이벤트 추가)
+         * 메인 대시보드에 개별 선생님 카드를 렌더링합니다.
+         * 선생님 카드 클릭 시, 질문 리스트 보기 모달이 기본으로 표시되며,
+         * Ctrl/Command 키를 누른 상태에서는 학생 질문 모달이 표시됩니다.
          */
         function renderTeachers() {
             const teachersGrid = document.getElementById('teachersGrid');
-            teachersGrid.innerHTML = ''; // 기존 선생님 카드 지우기
+            teachersGrid.innerHTML = '';
 
-            // 각 선생님별로 카드 생성 및 추가
             teachers.forEach(teacher => {
                 const config = statusConfig[teacher.status];
                 const teacherCard = document.createElement('div');
                 teacherCard.className = 'teacher-card';
-                // 과목에 맞는 아이콘을 찾아 사용, 없으면 기본 연필 아이콘
-                const subjectIcon = subjectIcons[teacher.subject] || "✏️"; 
+                const subjectIcon = subjectIcons[teacher.subject] || "✏️";
                 teacherCard.innerHTML = `
                     <div class="teacher-header">
                         <div class="teacher-avatar">
@@ -451,61 +485,52 @@
                         ${config.icon} ${teacher.status}
                     </div>
                 `;
-                // 선생님 카드 클릭 시 질문 모달 열기 이벤트 리스너 추가 (추가)
-                teacherCard.addEventListener('click', () => {
-                    selectedTeacherForQuestion = teacher; // 클릭된 선생님 정보 저장
-                    showQuestionModal(); // 질문 모달 표시
+                teacherCard.addEventListener('click', (event) => {
+                    // Ctrl 또는 Command 키를 누른 상태에서 클릭하면 질문하기 모달 표시
+                    if (event.ctrlKey || event.metaKey) { // metaKey는 Mac의 Command 키
+                        selectedTeacherForQuestion = teacher;
+                        showQuestionModal();
+                    } else { // 일반 클릭 시 질문 리스트 보기 모달 표시
+                        selectedTeacherForView = teacher;
+                        showViewQuestionsModal();
+                    }
                 });
                 teachersGrid.appendChild(teacherCard);
             });
         }
 
         // --- 로그인 모달 관련 함수 --- 
-
-        /**
-         * 로그인 모달을 표시합니다.
-         */
         function showLogin() {
             document.getElementById('loginModal').classList.remove('hidden');
-            document.getElementById('loginName').focus(); // 이름 입력 필드에 포커스
-            document.getElementById('loginError').classList.add('hidden'); // 오류 메시지 숨기기
-            document.getElementById('loginName').value = ''; // 필드 초기화
-            document.getElementById('loginPassword').value = ''; // 필드 초기화
-        }
-
-        /**
-         * 로그인 모달을 숨기고 입력 필드를 초기화합니다.
-         */
-        function hideLogin() {
-            document.getElementById('loginModal').classList.add('hidden');
-            document.getElementById('loginError').classList.add('hidden'); // 오류 메시지 숨기기
+            document.getElementById('loginName').focus();
+            document.getElementById('loginError').classList.add('hidden');
             document.getElementById('loginName').value = '';
             document.getElementById('loginPassword').value = '';
         }
 
-        /**
-         * 로그인 폼 제출을 처리합니다.
-         * @param {Event} event - 폼 제출 이벤트 객체.
-         */
+        function hideLogin() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('loginError').classList.add('hidden');
+            document.getElementById('loginName').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
         function handleLogin(event) {
-            event.preventDefault(); // 기본 폼 제출 동작 방지
+            event.preventDefault();
             const name = document.getElementById('loginName').value.toLowerCase().trim();
             const password = document.getElementById('loginPassword').value;
 
-            // 입력된 이름과 비밀번호로 선생님을 찾습니다.
             const teacher = teachers.find(t => {
                 const teacherName = t.name.toLowerCase();
-                // 'T' 접미사 유무에 관계없이 이름 매칭을 허용합니다. (예: "이명용" 또는 "이명용t")
                 const nameMatch = teacherName === name || teacherName.replace('t', '') === name;
                 return nameMatch && t.password === password;
             });
 
             if (teacher) {
-                currentTeacher = teacher; // 로그인된 선생님 정보 저장
-                hideLogin(); // 로그인 모달 숨기기
-                showTeacherDashboard(); // 선생님 대시보드 표시
+                currentTeacher = teacher;
+                hideLogin();
+                showTeacherDashboard();
             } else {
-                // 로그인 실패 시 오류 메시지 표시
                 const errorDiv = document.getElementById('loginError');
                 errorDiv.textContent = '이름 또는 비밀번호가 올바르지 않습니다.';
                 errorDiv.classList.remove('hidden');
@@ -513,24 +538,17 @@
         }
 
         // --- 선생님 대시보드 모달 관련 함수 ---
-
-        /**
-         * 선생님 전용 대시보드 모달을 표시합니다.
-         */
         function showTeacherDashboard() {
-            if (!currentTeacher) return; // 로그인된 선생님이 없으면 아무것도 하지 않음
+            if (!currentTeacher) return;
 
             document.getElementById('teacherName').textContent = currentTeacher.name + '님';
             document.getElementById('teacherSubject').textContent = currentTeacher.subject + ' 담당';
-            updateCurrentStatusDisplay(); // 현재 상태를 화면에 업데이트
-            updateStatusButtons(); // 상태 변경 버튼 활성화 상태 업데이트
-            renderTeacherQuestions(); // 선생님 대시보드에 질문 목록 렌더링 (추가)
+            updateCurrentStatusDisplay();
+            updateStatusButtons();
+            renderTeacherQuestions();
             document.getElementById('teacherModal').classList.remove('hidden');
         }
 
-        /**
-         * 선생님 대시보드의 현재 상태 표시를 업데이트합니다.
-         */
         function updateCurrentStatusDisplay() {
             const config = statusConfig[currentTeacher.status];
             document.getElementById('currentStatus').innerHTML = `
@@ -538,14 +556,10 @@
             `;
         }
 
-        /**
-         * 선생님 대시보드에서 현재 상태에 해당하는 버튼을 활성화(표시)합니다.
-         */
         function updateStatusButtons() {
             const buttons = document.querySelectorAll('.status-btn');
             buttons.forEach(btn => {
-                btn.classList.remove('active'); // 모든 버튼의 활성화 클래스 제거
-
+                btn.classList.remove('active');
                 const buttonStatus = btn.getAttribute('data-status');
                 if (currentTeacher.status === buttonStatus) {
                     btn.classList.add('active');
@@ -553,27 +567,18 @@
             });
         }
 
-        /**
-         * 로그인한 선생님의 상태를 업데이트하고 Firebase Realtime Database에 저장합니다.
-         * 이 함수가 호출되면 Firebase에 데이터가 변경되고, 'onValue' 리스너를 통해
-         * 모든 연결된 클라이언트의 UI가 자동으로 업데이트됩니다.
-         * @param {string} newStatus - 새로 설정할 상태.
-         */
         function updateStatus(newStatus) {
-            // 현재 로그인된 선생님의 인덱스를 찾습니다.
             const teacherIndex = teachers.findIndex(t => t.name === currentTeacher.name);
             if (teacherIndex !== -1) {
-                teachers[teacherIndex].status = newStatus; // 로컬 teachers 배열의 상태 업데이트
-                currentTeacher.status = newStatus;          // 현재 로그인된 선생님 객체의 상태도 업데이트
+                teachers[teacherIndex].status = newStatus;
+                currentTeacher.status = newStatus;
 
-                // Firebase Realtime Database에 업데이트된 teachers 배열 전체를 저장합니다.
                 set(teachersRef, teachers)
                     .then(() => {
-                        console.log("상태 업데이트 및 Firebase 저장 성공", newStatus); // 성공 로그에 newStatus 추가
+                        console.log("상태 업데이트 및 Firebase 저장 성공", newStatus);
                     })
                     .catch((error) => console.error("상태 업데이트 및 Firebase 저장 오류:", error));
 
-                // 현재 탭의 UI를 즉시 업데이트 (Firebase 리스너가 다른 탭들을 업데이트 해줄 것입니다.)
                 updateCurrentStatusDisplay();
                 updateStatusButtons();
             } else {
@@ -581,54 +586,45 @@
             }
         }
 
-        /**
-         * 현재 로그인된 선생님을 로그아웃하고 대시보드 모달을 숨깁니다.
-         */
-        function logout() {
-            currentTeacher = null; // 로그인된 선생님 정보 초기화
+        // 선생님 대시보드 창만 닫기 (로그인 상태 유지)
+        function closeTeacherDashboard() {
             document.getElementById('teacherModal').classList.add('hidden');
-            // 보안을 위해 로그인 필드도 초기화
-            document.getElementById('loginName').value = '';
-            document.getElementById('loginPassword').value = '';
-            console.log("로그아웃되었습니다."); // 로그아웃 확인용 로그
+            console.log("선생님 대시보드가 닫혔습니다. 로그인 상태 유지.");
         }
 
-        // --- 질문 모달 관련 함수 (새롭게 추가) ---
+        // 로그아웃 (로그인 상태 해제)
+        function logout() {
+            currentTeacher = null;
+            document.getElementById('teacherModal').classList.add('hidden');
+            document.getElementById('loginName').value = '';
+            document.getElementById('loginPassword').value = '';
+            console.log("로그아웃되었습니다.");
+        }
 
-        /**
-         * 학생이 선생님에게 질문을 남길 수 있는 모달을 표시합니다.
-         */
+        // --- 질문 모달 관련 함수 (학생이 선생님께 질문) ---
         function showQuestionModal() {
-            if (!selectedTeacherForQuestion) return; // 선택된 선생님이 없으면 리턴
+            if (!selectedTeacherForQuestion) return;
 
             document.getElementById('questionTeacherName').textContent = selectedTeacherForQuestion.name + ' 선생님께 질문';
             document.getElementById('questionModal').classList.remove('hidden');
-            // 입력 필드 초기화 및 에러 메시지 숨기기
             document.getElementById('studentId').value = '';
             document.getElementById('studentName').value = '';
             document.getElementById('questionText').value = '';
             document.getElementById('questionError').classList.add('hidden');
-            document.getElementById('studentId').focus(); // 학번 필드에 포커스
+            document.getElementById('studentId').focus();
         }
 
-        /**
-         * 질문 모달을 숨기고 입력 필드를 초기화합니다.
-         */
         function hideQuestionModal() {
             document.getElementById('questionModal').classList.add('hidden');
             document.getElementById('questionError').classList.add('hidden');
             document.getElementById('studentId').value = '';
             document.getElementById('studentName').value = '';
             document.getElementById('questionText').value = '';
-            selectedTeacherForQuestion = null; // 선택된 선생님 정보 초기화
+            selectedTeacherForQuestion = null;
         }
 
-        /**
-         * 학생의 질문 폼 제출을 처리하고 Firebase에 저장합니다.
-         * @param {Event} event - 폼 제출 이벤트 객체.
-         */
         function handleQuestionSubmit(event) {
-            event.preventDefault(); // 기본 폼 제출 동작 방지
+            event.preventDefault();
             const studentId = document.getElementById('studentId').value.trim();
             const studentName = document.getElementById('studentName').value.trim();
             const questionText = document.getElementById('questionText').value.trim();
@@ -641,19 +637,18 @@
             }
 
             const newQuestion = {
-                teacherName: selectedTeacherForQuestion.name, // 질문 대상 선생님 이름
+                teacherName: selectedTeacherForQuestion.name,
                 studentId: studentId,
                 studentName: studentName,
                 questionText: questionText,
-                timestamp: new Date().toISOString() // 질문 작성 시간 (ISO 8601 형식)
+                timestamp: new Date().toISOString()
             };
 
-            // Firebase 'questions' 경로에 새 질문 추가 (push 함수로 고유 ID 자동 생성)
             push(questionsRef, newQuestion)
                 .then(() => {
                     console.log("질문이 성공적으로 제출되었습니다.");
-                    alert("질문이 성공적으로 제출되었습니다!"); // 사용자에게 알림
-                    hideQuestionModal(); // 질문 모달 숨기기
+                    alert("질문이 성공적으로 제출되었습니다!");
+                    hideQuestionModal();
                 })
                 .catch((error) => {
                     console.error("질문 제출 오류:", error);
@@ -663,14 +658,9 @@
                 });
         }
 
-        // --- 선생님 대시보드 질문 목록 렌더링 및 답변 기능 (새롭게 추가) ---
-
-        /**
-         * 로그인한 선생님에게 온 질문 목록을 렌더링합니다.
-         */
+        // --- 선생님 대시보드 질문 목록 렌더링 및 답변/삭제 기능 ---
         function renderTeacherQuestions() {
             let teacherQuestionsSection = document.getElementById('teacherQuestionsSection');
-            // '나에게 온 질문' 섹션이 없으면 생성하여 추가
             if (!teacherQuestionsSection) {
                 const teacherModalContent = document.querySelector('#teacherModal .modal-content');
                 const logoutBtn = document.getElementById('logoutBtn');
@@ -680,14 +670,21 @@
                 teacherQuestionsSection.className = 'questions-section';
                 teacherQuestionsSection.innerHTML = `<h3>나에게 온 질문</h3><div id="questionsList"></div>`;
                 
-                // 로그아웃 버튼 위에 질문 섹션 삽입
                 teacherModalContent.insertBefore(teacherQuestionsSection, logoutBtn);
+
+                // '닫기' 버튼 추가
+                const closeDashboardBtn = document.createElement('button');
+                closeDashboardBtn.id = 'closeDashboardBtn';
+                closeDashboardBtn.className = 'btn btn-outline';
+                closeDashboardBtn.style.cssText = 'width: 100%; margin-top: 1rem;';
+                closeDashboardBtn.innerHTML = '닫기';
+                closeDashboardBtn.addEventListener('click', closeTeacherDashboard);
+                teacherModalContent.insertBefore(closeDashboardBtn, logoutBtn);
             }
 
             const questionsList = document.getElementById('questionsList');
-            questionsList.innerHTML = ''; // 기존 질문 목록 지우기
+            questionsList.innerHTML = '';
 
-            // 현재 로그인된 선생님에게 온 질문만 필터링
             const myQuestions = questions.filter(q => q.teacherName === currentTeacher.name);
 
             if (myQuestions.length === 0) {
@@ -699,7 +696,6 @@
                 const questionCard = document.createElement('div');
                 questionCard.className = 'question-card';
 
-                // 질문 시간 포맷팅
                 const questionTime = new Date(question.timestamp).toLocaleString('ko-KR', {
                     year: 'numeric', month: '2-digit', day: '2-digit',
                     hour: '2-digit', minute: '2-digit', hour12: false
@@ -708,7 +704,10 @@
                 questionCard.innerHTML = `
                     <div class="question-meta">
                         <span><strong>학번:</strong> ${question.studentId} | <strong>이름:</strong> ${question.studentName}</span>
-                        <span>${questionTime}</span>
+                        <span class="delete-button-container">
+                            ${questionTime}
+                            <button class="delete-button" data-question-id="${question.id}">🗑️ 삭제</button>
+                        </span>
                     </div>
                     <div class="question-text">${question.questionText}</div>
                     ${question.answer ? `
@@ -730,11 +729,11 @@
                 questionsList.appendChild(questionCard);
             });
 
-            // 답변 제출 버튼 이벤트 리스너 추가
+            // 답변 제출 버튼 이벤트 리스너
             questionsList.querySelectorAll('.answer-submit-btn').forEach(button => {
                 button.addEventListener('click', (event) => {
                     const questionId = event.target.getAttribute('data-question-id');
-                    const answerInput = event.target.previousElementSibling; // textarea 요소를 가져옴
+                    const answerInput = event.target.previousElementSibling; // textarea
                     const answerText = answerInput.value.trim();
 
                     if (answerText) {
@@ -744,20 +743,23 @@
                     }
                 });
             });
+
+            // 삭제 버튼 이벤트 리스너
+            questionsList.querySelectorAll('.delete-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const questionId = event.target.getAttribute('data-question-id');
+                    if (confirm('정말로 이 질문을 삭제하시겠습니까?')) {
+                        deleteQuestion(questionId);
+                    }
+                });
+            });
         }
 
-        /**
-         * 특정 질문에 대한 선생님 답변을 Firebase에 저장합니다.
-         * @param {string} questionId - 답변할 질문의 고유 ID.
-         * @param {string} answerText - 선생님의 답변 내용.
-         */
         function submitAnswer(questionId, answerText) {
-            // 해당 질문의 Firebase 경로 참조
             const questionRef = ref(database, `questions/${questionId}`);
-            // 질문 객체에 답변 내용과 답변 시간을 업데이트
             update(questionRef, {
                 answer: answerText,
-                answerTimestamp: new Date().toISOString() // 답변 작성 시간
+                answerTimestamp: new Date().toISOString()
             })
             .then(() => {
                 console.log(`질문 ${questionId}에 대한 답변이 성공적으로 제출되었습니다.`);
@@ -769,20 +771,96 @@
             });
         }
 
+        /**
+         * 특정 질문을 Firebase에서 삭제합니다.
+         */
+        function deleteQuestion(questionId) {
+            const questionToRemoveRef = ref(database, `questions/${questionId}`);
+            remove(questionToRemoveRef)
+                .then(() => {
+                    console.log(`질문 ${questionId}가 성공적으로 삭제되었습니다.`);
+                    alert('질문이 삭제되었습니다.');
+                })
+                .catch((error) => {
+                    console.error(`질문 ${questionId} 삭제 오류:`, error);
+                    alert('질문 삭제에 실패했습니다. 다시 시도해주세요.');
+                });
+        }
+
+        // --- 질문 리스트 보기 모달 관련 함수 (모든 사용자) ---
+        function showViewQuestionsModal() {
+            if (!selectedTeacherForView) return;
+
+            document.getElementById('viewQuestionsTeacherName').textContent = selectedTeacherForView.name + ' 선생님의 질문 목록';
+            renderPublicQuestions(selectedTeacherForView.name);
+            document.getElementById('viewQuestionsModal').classList.remove('hidden');
+        }
+
+        function hideViewQuestionsModal() {
+            document.getElementById('viewQuestionsModal').classList.add('hidden');
+            selectedTeacherForView = null;
+        }
+
+        /**
+         * 모든 사용자를 위한 질문 목록을 렌더링합니다. (삭제/답변 입력 기능 없음)
+         */
+        function renderPublicQuestions(teacherName) {
+            const publicQuestionsList = document.getElementById('publicQuestionsList');
+            const publicQuestionsEmpty = document.getElementById('publicQuestionsEmpty');
+            publicQuestionsList.innerHTML = '';
+
+            const teacherSpecificQuestions = questions.filter(q => q.teacherName === teacherName);
+
+            if (teacherSpecificQuestions.length === 0) {
+                publicQuestionsEmpty.classList.remove('hidden');
+                publicQuestionsList.classList.add('hidden');
+                return;
+            } else {
+                publicQuestionsEmpty.classList.add('hidden');
+                publicQuestionsList.classList.remove('hidden');
+            }
+
+            teacherSpecificQuestions.forEach(question => {
+                const questionCard = document.createElement('div');
+                questionCard.className = 'question-card';
+
+                const questionTime = new Date(question.timestamp).toLocaleString('ko-KR', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', hour12: false
+                });
+
+                questionCard.innerHTML = `
+                    <div class="question-meta">
+                        <span><strong>학번:</strong> ${question.studentId} | <strong>이름:</strong> ${question.studentName}</span>
+                        <span>${questionTime}</span>
+                    </div>
+                    <div class="question-text">${question.questionText}</div>
+                    ${question.answer ? `
+                        <div class="answer-section">
+                            <strong>선생님 답변:</strong>
+                            <div class="answer-text">${question.answer}</div>
+                            <div class="question-meta" style="justify-content: flex-end; margin-top: 0.5rem;">답변 시간: ${new Date(question.answerTimestamp).toLocaleString('ko-KR', {
+                                year: 'numeric', month: '2-digit', day: '2-digit',
+                                hour: '2-digit', minute: '2-digit', hour12: false
+                            })}</div>
+                        </div>
+                    ` : `
+                        <p style="font-size: 0.875rem; color: #6b7280; margin-top: 1rem;">아직 답변이 등록되지 않았습니다.</p>
+                    `}
+                `;
+                publicQuestionsList.appendChild(questionCard);
+            });
+        }
+
 
         // --- 초기 로드 및 이벤트 리스너 설정 --- 
-
         document.addEventListener('DOMContentLoaded', () => {
-            // 페이지 로드 시 Firebase 데이터 리스너를 설정하여 실시간 동기화를 시작합니다.
             initializeFirebaseDataListener();
 
             // 로그인 버튼 이벤트 리스너
             const loginButton = document.getElementById('loginButton');
             if (loginButton) {
                 loginButton.addEventListener('click', showLogin);
-                console.log("로그인 버튼에 클릭 리스너가 성공적으로 연결되었습니다.");
-            } else {
-                console.error("ID 'loginButton'을 가진 로그인 버튼을 찾을 수 없습니다. HTML을 확인해주세요.");
             }
 
             // 로그인 폼 제출 이벤트 리스너
@@ -797,47 +875,37 @@
                 loginCancelBtn.addEventListener('click', hideLogin);
             }
 
-            // Enter 키 입력 시 로그인 처리 (현재 로그인 모달이 열려 있을 때만)
+            // Enter 키 입력 시 로그인 처리 (로그인 모달이 열려 있을 때만)
             document.addEventListener('keydown', function(event) {
                 const loginModal = document.getElementById('loginModal');
                 if (event.key === 'Enter' && !loginModal.classList.contains('hidden')) {
-                    // 폼 자체에 submit 이벤트 리스너가 있으므로, 여기서는 submit을 트리거합니다.
-                    // 이렇게 하면 handleLogin 함수가 직접 호출되는 것과 동일한 효과를 냅니다.
                     loginForm.dispatchEvent(new Event('submit'));
                 }
             });
 
-            // **상태 변경 버튼 이벤트 리스너**
+            // 상태 변경 버튼 이벤트 리스너
             const statusButtons = document.querySelectorAll('.status-btn');
             statusButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
                     const newStatus = btn.getAttribute('data-status');
                     if (newStatus) {
                         updateStatus(newStatus);
-                    } else {
-                        console.warn("상태 변경 버튼에 'data-status' 속성이 없습니다:", btn);
                     }
                 });
             });
 
-            // **로그아웃 버튼 이벤트 리스너**
+            // 로그아웃 버튼 이벤트 리스너
             const logoutButton = document.getElementById('logoutBtn');
             if (logoutButton) {
                 logoutButton.addEventListener('click', logout);
-                console.log("로그아웃 버튼에 클릭 리스너가 성공적으로 연결되었습니다.");
-            } else {
-                console.error("ID 'logoutBtn'을 가진 로그아웃 버튼을 찾을 수 없습니다. HTML을 확인해주세요.");
             }
 
-            // --- 새로 추가된 질문 모달 관련 이벤트 리스너 ---
-
-            // 질문 폼 제출 이벤트 리스너
+            // --- 학생 질문 모달 관련 이벤트 리스너 ---
             const questionForm = document.getElementById('questionForm');
             if (questionForm) {
                 questionForm.addEventListener('submit', handleQuestionSubmit);
             }
 
-            // 질문 모달 취소 버튼 이벤트 리스너
             const questionCancelBtn = document.getElementById('questionCancelBtn');
             if (questionCancelBtn) {
                 questionCancelBtn.addEventListener('click', hideQuestionModal);
@@ -846,14 +914,18 @@
             // Enter 키 입력 시 질문 제출 처리 (질문 모달이 열려 있을 때만)
             document.addEventListener('keydown', function(event) {
                 const questionModal = document.getElementById('questionModal');
-                // 질문 모달이 열려 있고, Enter 키를 눌렀을 때
                 if (event.key === 'Enter' && !questionModal.classList.contains('hidden')) {
-                    // textarea에서는 Enter가 줄 바꿈으로 동작하므로, 텍스트 에어리어가 아닌 다른 입력 필드에 포커스 되어있을 때만 submit을 트리거합니다.
                     if (document.activeElement.tagName !== 'TEXTAREA') {
                         questionForm.dispatchEvent(new Event('submit'));
                     }
                 }
             });
+
+            // --- 질문 리스트 보기 모달 관련 이벤트 리스너 ---
+            const viewQuestionsCloseBtn = document.getElementById('viewQuestionsCloseBtn');
+            if (viewQuestionsCloseBtn) {
+                viewQuestionsCloseBtn.addEventListener('click', hideViewQuestionsModal);
+            }
         });
     </script>
 </body>
