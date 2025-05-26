@@ -111,9 +111,9 @@
             justify-content: space-between; /* 양 끝 정렬 */
             align-items: flex-start; /* 상단 정렬 */
             flex-wrap: wrap; /* 내용이 많아지면 줄 바꿈 허용 */
-            position: relative; /* 삭제 버튼 컨테이너를 위한 기준점 */
+            position: relative; /* 삭제 버튼 위치 조정을 위해 추가 */
             gap: 0.5rem; /* 요소 간의 간격 추가 */
-            /* padding-right: 70px; 이 부분 제거, delete-button-wrapper에서 공간 확보 */
+            padding-right: 70px; /* 삭제 버튼 공간 확보 */
         }
         .question-meta .student-info {
             flex-grow: 1; /* 학생 정보가 최대한 공간을 차지하도록 */
@@ -123,20 +123,15 @@
         }
         .question-meta .datetime-info {
             white-space: nowrap; /* 시간 정보가 한 줄에 있도록 */
+            /* margin-left: auto; */ /* 삭제 버튼 위치 조정으로 인해 제거 */
         }
-
-        /* 삭제 버튼 감싸는 컨테이너 */
-        .delete-button-wrapper {
+        .question-meta .delete-button-container {
             position: absolute; /* 절대 위치 */
             right: 0; /* 오른쪽 끝에 배치 */
-            top: 0; /* 상단에 배치 */
-            display: flex;
-            gap: 0.5rem; /* 버튼 간의 간격 */
-            white-space: nowrap; /* 버튼들이 한 줄에 있도록 */
-            padding-left: 10px; /* 텍스트와 버튼이 너무 붙지 않도록 */
-            background: linear-gradient(to left, #f9fafb 50%, rgba(249,250,251,0) 100%); /* 배경색이 버튼까지 이어지도록 */
+            top: 50%; /* 수직 중앙 정렬 */
+            transform: translateY(-50%); /* 정확한 수직 중앙 정렬 */
+            z-index: 10; /* 다른 요소 위에 오도록 */
         }
-
         .delete-button {
             background: #ef4444;
             color: white;
@@ -146,31 +141,15 @@
             font-size: 0.75rem;
             cursor: pointer;
             transition: background-color 0.2s ease-in-out;
+            margin-left: 0.5rem;
             display: inline-flex;
             align-items: center;
             gap: 0.25rem;
             white-space: nowrap; /* 버튼 내용이 줄 바꿈되지 않도록 */
         }
+
         .delete-button:hover {
             background: #dc2626;
-        }
-
-        .delete-answer-button {
-            background: #6b7280; /* 회색 계열 */
-            color: white;
-            border: none;
-            border-radius: 0.375rem;
-            padding: 0.375rem 0.75rem;
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            white-space: nowrap;
-        }
-        .delete-answer-button:hover {
-            background: #4b5563; /* 좀 더 진한 회색 */
         }
 
         .question-text {
@@ -184,7 +163,6 @@
             margin-top: 1rem;
             padding-top: 1rem;
             border-top: 1px dashed #d1d5db;
-            position: relative; /* 답변 삭제 버튼 위치 조정을 위한 기준점 */
         }
         .answer-section strong {
             color: #4f46e5;
@@ -221,24 +199,6 @@
         .answer-submit-btn:hover {
             background: #4338ca;
         }
-
-        /* 알림 메시지 스타일 */
-        .notification-message {
-            background: #fff3cd; /* 노란색 배경 */
-            color: #664d03; /* 어두운 노란색 텍스트 */
-            padding: 0.75rem 1.25rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-            text-align: center;
-            border: 1px solid #ffecb3;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            font-weight: 600;
-        }
-
     </style>
 </head>
 <body>
@@ -490,10 +450,10 @@
                 statCard.className = 'stat-card';
                 statCard.innerHTML = `
                     <div class="stat-icon ${config.class}">
-                        <span class="math-inline">\{config\.icon\}
-</div\>
-<div\>
-<div class\="stat\-count"\></span>{count}</div>
+                        ${config.icon}
+                    </div>
+                    <div>
+                        <div class="stat-count">${count}</div>
                         <div class="stat-label">${status}</div>
                     </div>
                 `;
@@ -529,10 +489,10 @@
                 teacherCard.innerHTML = `
                     <div class="teacher-header">
                         <div class="teacher-avatar">
-                            <span class="math-inline">\{subjectIcon\}
-</div\>
-<div\>
-<div class\="teacher\-name"\></span>{teacher.name}</div>
+                            ${subjectIcon}
+                        </div>
+                        <div>
+                            <div class="teacher-name">${teacher.name}</div>
                             <div class="teacher-subject">${teacher.subject}</div>
                         </div>
                     </div>
@@ -583,10 +543,6 @@
 
             if (teacher) {
                 currentTeacher = teacher;
-                // --- 로그인 유지 기능 추가: 로그인 정보 저장 ---
-                localStorage.setItem('loggedInTeacherName', teacher.name);
-                localStorage.setItem('loggedInTeacherPassword', teacher.password);
-                // --- 로그인 유지 기능 추가 끝 ---
                 hideLogin();
                 showTeacherDashboard();
             } else {
@@ -654,15 +610,9 @@
         // 로그아웃 (로그인 상태 해제)
         function logout() {
             currentTeacher = null;
-            // --- 로그인 유지 기능 추가: 로그인 정보 제거 ---
-            localStorage.removeItem('loggedInTeacherName');
-            localStorage.removeItem('loggedInTeacherPassword');
-            // --- 로그인 유지 기능 추가 끝 ---
             document.getElementById('teacherModal').classList.add('hidden');
             document.getElementById('loginName').value = '';
             document.getElementById('loginPassword').value = '';
-            // 로그아웃 시 로그인 버튼을 다시 표시
-            document.getElementById('loginButton').classList.remove('hidden');
             console.log("로그아웃되었습니다.");
         }
 
@@ -733,7 +683,7 @@
                 teacherQuestionsSection = document.createElement('div');
                 teacherQuestionsSection.id = 'teacherQuestionsSection';
                 teacherQuestionsSection.className = 'questions-section';
-                teacherQuestionsSection.innerHTML = `<h3>나에게 온 질문</h3><div id="teacherUnansweredAlert" class="notification-message hidden" style="margin-bottom: 1rem;"></div><div id="questionsList"></div>`;
+                teacherQuestionsSection.innerHTML = `<h3>나에게 온 질문</h3><div id="questionsList"></div>`;
                 
                 teacherModalContent.insertBefore(teacherQuestionsSection, logoutBtn);
 
@@ -748,39 +698,14 @@
             }
 
             const questionsList = document.getElementById('questionsList');
-            const teacherUnansweredAlert = document.getElementById('teacherUnansweredAlert');
             questionsList.innerHTML = '';
 
             const myQuestions = questions.filter(q => q.teacherName === currentTeacher.name);
-            const unansweredQuestions = myQuestions.filter(q => !q.answer); // 답변 없는 질문 필터링
 
             if (myQuestions.length === 0) {
                 questionsList.innerHTML = '<p style="color: #6b7280; text-align: center;">아직 받은 질문이 없습니다.</p>';
-                teacherUnansweredAlert.classList.add('hidden'); // 질문이 없으면 알림 숨김
-                // 모든 질문에 답변했을 경우 데이터셋 제거 (다음에 열릴 때 다시 체크)
-                if (document.getElementById('teacherModal').dataset.initialLoadHandled) {
-                    delete document.getElementById('teacherModal').dataset.initialLoadHandled;
-                }
                 return;
             }
-
-            // --- 알림 로직 시작 ---
-            if (unansweredQuestions.length > 0) {
-                teacherUnansweredAlert.innerHTML = `🔔 답변하지 않은 질문이 <strong>${unansweredQuestions.length}개</strong> 있습니다.`;
-                teacherUnansweredAlert.classList.remove('hidden');
-                // 선생님 대시보드가 처음 열릴 때만 alert 알림 (한번만)
-                if (!document.getElementById('teacherModal').dataset.initialLoadHandled) {
-                    alert(`답변하지 않은 질문이 ${unansweredQuestions.length}개 있습니다.`);
-                    document.getElementById('teacherModal').dataset.initialLoadHandled = 'true';
-                }
-            } else {
-                teacherUnansweredAlert.classList.add('hidden');
-                // 모든 질문에 답변했을 경우 데이터셋 제거 (다음에 열릴 때 다시 체크)
-                if (document.getElementById('teacherModal').dataset.initialLoadHandled) {
-                    delete document.getElementById('teacherModal').dataset.initialLoadHandled;
-                }
-            }
-            // --- 알림 로직 끝 ---
 
             myQuestions.forEach(question => {
                 const questionTime = new Date(question.timestamp).toLocaleString('ko-KR', {
@@ -792,14 +717,13 @@
                 questionCard.className = 'question-card';
                 questionCard.innerHTML = `
                     <div class="question-meta">
-                        <span class="student-info"><strong>학번:</strong> ${question.studentId} | <strong>이름:</strong> <span class="math-inline">\{question\.studentName\}</span\>
-<span class\="datetime\-info"\></span>{questionTime}</span>
-                        <div class="delete-button-wrapper">
-                            ${question.answer ? `<button class="delete-answer-button" data-question-id="${question.id}">📝 답변 삭제</button>` : ''}
-                            <button class="delete-button" data-question-id="<span class="math-inline">\{question\.id\}"\>🗑️ 질문 삭제</button\>
-</div\>
-</div\>
-<div class\="question\-text"\></span>{question.questionText}</div>
+                        <span class="student-info"><strong>학번:</strong> ${question.studentId} | <strong>이름:</strong> ${question.studentName}</span>
+                        <span class="datetime-info">${questionTime}</span>
+                        <span class="delete-button-container">
+                            <button class="delete-button" data-question-id="${question.id}">🗑️ 삭제</button>
+                        </span>
+                    </div>
+                    <div class="question-text">${question.questionText}</div>
                     ${question.answer ? `
                         <div class="answer-section">
                             <strong>선생님 답변:</strong>
@@ -836,22 +760,12 @@
                 });
             });
 
-            // 질문 삭제 버튼 이벤트 리스너
+            // 삭제 버튼 이벤트 리스너
             questionsList.querySelectorAll('.delete-button').forEach(button => {
                 button.addEventListener('click', (event) => {
                     const questionId = event.target.getAttribute('data-question-id');
-                    if (confirm('정말로 이 질문을 삭제하시겠습니까? (질문과 답변 모두 삭제됩니다)')) {
+                    if (confirm('정말로 이 질문을 삭제하시겠습니까?')) {
                         deleteQuestion(questionId);
-                    }
-                });
-            });
-
-            // 답변 삭제 버튼 이벤트 리스너
-            questionsList.querySelectorAll('.delete-answer-button').forEach(button => {
-                button.addEventListener('click', (event) => {
-                    const questionId = event.target.getAttribute('data-question-id');
-                    if (confirm('정말로 이 답변만 삭제하시겠습니까? (질문은 유지됩니다)')) {
-                        deleteAnswer(questionId);
                     }
                 });
             });
@@ -865,10 +779,6 @@
             })
             .then(() => {
                 console.log(`질문 ${questionId}에 대한 답변이 성공적으로 제출되었습니다.`);
-                // 답변 제출 후, 알림 상태를 재평가하기 위해 initialLoadHandled 데이터셋 제거
-                if (document.getElementById('teacherModal').dataset.initialLoadHandled) {
-                    delete document.getElementById('teacherModal').dataset.initialLoadHandled;
-                }
                 alert('답변이 성공적으로 등록되었습니다.');
             })
             .catch((error) => {
@@ -885,39 +795,12 @@
             remove(questionToRemoveRef)
                 .then(() => {
                     console.log(`질문 ${questionId}가 성공적으로 삭제되었습니다.`);
-                    // 질문 삭제 후, 알림 상태를 재평가하기 위해 initialLoadHandled 데이터셋 제거
-                    if (document.getElementById('teacherModal').dataset.initialLoadHandled) {
-                        delete document.getElementById('teacherModal').dataset.initialLoadHandled;
-                    }
                     alert('질문이 삭제되었습니다.');
                 })
                 .catch((error) => {
                     console.error(`질문 ${questionId} 삭제 오류:`, error);
                     alert('질문 삭제에 실패했습니다. 다시 시도해주세요.');
                 });
-        }
-
-        /**
-         * 특정 질문의 답변만 Firebase에서 삭제합니다.
-         */
-        function deleteAnswer(questionId) {
-            const questionToUpdateRef = ref(database, `questions/${questionId}`);
-            update(questionToUpdateRef, {
-                answer: null, // 답변 필드를 null로 설정하여 삭제
-                answerTimestamp: null // 답변 시간도 함께 삭제
-            })
-            .then(() => {
-                console.log(`질문 ${questionId}의 답변이 성공적으로 삭제되었습니다.`);
-                 // 답변 삭제 후, 알림 상태를 재평가하기 위해 initialLoadHandled 데이터셋 제거
-                if (document.getElementById('teacherModal').dataset.initialLoadHandled) {
-                    delete document.getElementById('teacherModal').dataset.initialLoadHandled;
-                }
-                alert('답변이 삭제되었습니다.');
-            })
-            .catch((error) => {
-                console.error(`질문 ${questionId} 답변 삭제 오류:`, error);
-                alert('답변 삭제에 실패했습니다. 다시 시도해주세요.');
-            });
         }
 
         // --- 질문 리스트 보기 모달 관련 함수 (모든 사용자) ---
@@ -964,8 +847,8 @@
 
                 questionCard.innerHTML = `
                     <div class="question-meta">
-                        <span class="student-info"><strong>학번:</strong> ${question.studentId} | <strong>이름:</strong> <span class="math-inline">\{question\.studentName\}</span\>
-<span class\="datetime\-info"\></span>{questionTime}</span>
+                        <span class="student-info"><strong>학번:</strong> ${question.studentId} | <strong>이름:</strong> ${question.studentName}</span>
+                        <span class="datetime-info">${questionTime}</span>
                     </div>
                     <div class="question-text">${question.questionText}</div>
                     ${question.answer ? `
@@ -992,38 +875,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             initializeFirebaseDataListener();
 
-            // --- 로그인 유지 기능 추가: 초기 로드 시 로그인 상태 확인 ---
-            const savedName = localStorage.getItem('loggedInTeacherName');
-            const savedPassword = localStorage.getItem('loggedInTeacherPassword');
-
-            if (savedName && savedPassword) {
-                // Firebase에서 teachers 데이터가 로드된 후에 자동 로그인 시도
-                const unsubscribeTeachers = onValue(teachersRef, (snapshot) => {
-                    const data = snapshot.val();
-                    teachers = data || []; // teachers 배열 업데이트
-
-                    const teacher = teachers.find(t => {
-                        const teacherName = t.name.toLowerCase();
-                        const savedNameLower = savedName.toLowerCase();
-                        const nameMatch = teacherName === savedNameLower || teacherName.replace('t', '') === savedNameLower;
-                        return nameMatch && t.password === savedPassword;
-                    });
-
-                    if (teacher) {
-                        currentTeacher = teacher;
-                        showTeacherDashboard();
-                        document.getElementById('loginButton').classList.add('hidden'); // 로그인 버튼 숨김
-                        console.log("자동 로그인 성공:", teacher.name);
-                    } else {
-                        console.log("저장된 로그인 정보가 유효하지 않습니다. 자동 로그인 실패.");
-                        localStorage.removeItem('loggedInTeacherName');
-                        localStorage.removeItem('loggedInTeacherPassword');
-                    }
-                    unsubscribeTeachers(); // 한 번 로드 후 리스너 해제
-                }, { onlyOnce: true }); // 데이터를 한 번만 가져오도록 설정
-            }
-            // --- 로그인 유지 기능 추가 끝 ---
-            
             // 로그인 버튼 이벤트 리스너
             const loginButton = document.getElementById('loginButton');
             if (loginButton) {
@@ -1046,4 +897,65 @@
             document.addEventListener('keydown', function(event) {
                 const loginModal = document.getElementById('loginModal');
                 if (event.key === 'Enter' && !loginModal.classList.contains('hidden')) {
-                    loginForm.dispatchEvent(new Event('
+                    loginForm.dispatchEvent(new Event('submit'));
+                }
+            });
+
+            // 상태 변경 버튼 이벤트 리스너
+            const statusButtons = document.querySelectorAll('.status-btn');
+            statusButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const newStatus = btn.getAttribute('data-status');
+                    if (newStatus) {
+                        updateStatus(newStatus);
+                    }
+                });
+            });
+
+            // 로그아웃 버튼 이벤트 리스너
+            const logoutButton = document.getElementById('logoutBtn');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', logout);
+            }
+
+            // --- 학생 질문 모달 관련 이벤트 리스너 ---
+            const questionForm = document.getElementById('questionForm');
+            if (questionForm) {
+                questionForm.addEventListener('submit', handleQuestionSubmit);
+            }
+
+            const questionCancelBtn = document.getElementById('questionCancelBtn');
+            if (questionCancelBtn) {
+                questionCancelBtn.addEventListener('click', hideQuestionModal);
+            }
+
+            // Enter 키 입력 시 질문 제출 처리 (질문 모달이 열려 있을 때만)
+            document.addEventListener('keydown', function(event) {
+                const questionModal = document.getElementById('questionModal');
+                if (event.key === 'Enter' && !questionModal.classList.contains('hidden')) {
+                    if (document.activeElement.tagName !== 'TEXTAREA') {
+                        questionForm.dispatchEvent(new Event('submit'));
+                    }
+                }
+            });
+
+            // --- 질문 리스트 보기 모달 관련 이벤트 리스너 ---
+            const viewQuestionsCloseBtn = document.getElementById('viewQuestionsCloseBtn');
+            if (viewQuestionsCloseBtn) {
+                viewQuestionsCloseBtn.addEventListener('click', hideViewQuestionsModal);
+            }
+
+            // '질문하기' 버튼 이벤트 리스너 (질문 목록 모달 내)
+            const askQuestionFromViewModalBtn = document.getElementById('askQuestionFromViewModalBtn');
+            if (askQuestionFromViewModalBtn) {
+                askQuestionFromViewModalBtn.addEventListener('click', () => {
+                    // 현재 보고 있는 선생님에게 질문하도록 selectedTeacherForQuestion 설정
+                    selectedTeacherForQuestion = selectedTeacherForView; 
+                    hideViewQuestionsModal(); // 질문 목록 모달 닫기
+                    showQuestionModal(); // 질문 작성 모달 열기
+                });
+            }
+        });
+    </script>
+</body>
+</html>
