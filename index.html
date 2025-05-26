@@ -34,7 +34,9 @@
         .stat-label { font-size: 0.875rem; color: #6b7280; }
         .teachers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
         .teacher-card { background: rgba(255, 255, 255, 0.9); border-radius: 1rem; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .teacher-card:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        /* 학생이 클릭할 수 있도록 커서 변경 */
+        .teacher-card:not(.logged-in-teacher):hover { cursor: pointer; transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+
         .teacher-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
         .teacher-avatar {
             width: 48px;
@@ -225,14 +227,14 @@
 
         // Firebase Configuration (본인의 Firebase 프로젝트 설정으로 변경해야 합니다.)
         const firebaseConfig = {
-            apiKey: "AIzaSyCr90aSlJxQjRNBMqLlVBunhBIHbyTPa88", // 실제 API 키
-            authDomain: "sssss-8ec7d.firebaseapp.com",
-            databaseURL: "https://sssss-8ec7d-default-rtdb.firebaseio.com",
-            projectId: "sssss-8ec7d",
-            storageBucket: "sssss-8ec7d.firebasestorage.app",
-            messagingSenderId: "1040806517474",
-            appId: "1:1040806517474:web:6e1f112297b6808b449cbb",
-            measurementId: "G-P1YRYXDY06"
+            apiKey: "YOUR_API_KEY", // ⭐ 여기에 실제 Firebase API 키를 입력하세요
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            measurementId: "YOUR_MEASUREMENT_ID"
         };
 
         // Firebase 앱을 초기화합니다.
@@ -312,6 +314,8 @@
                     });
                 }
 
+                console.log("Firebase에서 불러온 teachers 데이터:", teachers); // ⭐ 데이터 로드 확인용 로그
+
                 // UI 렌더링 함수 호출
                 renderStats();
                 renderTeachers();
@@ -377,6 +381,11 @@
                 const config = statusConfig[teacher.status];
                 const teacherCard = document.createElement('div');
                 teacherCard.className = 'teacher-card';
+                // 로그인된 선생님의 카드에는 'logged-in-teacher' 클래스 추가
+                if (currentTeacher && currentTeacher.name === teacher.name) {
+                    teacherCard.classList.add('logged-in-teacher');
+                }
+
                 // 과목에 맞는 아이콘을 찾아 사용, 없으면 기본 연필 아이콘
                 const subjectIcon = subjectIcons[teacher.subject] || "✏️";
                 teacherCard.innerHTML = `
@@ -408,6 +417,7 @@
             document.getElementById('loginError').classList.add('hidden'); // 오류 메시지 숨기기
             document.getElementById('loginName').value = ''; // 필드 초기화
             document.getElementById('loginPassword').value = ''; // 필드 초기화
+            console.log("로그인 버튼에 클릭 리스너가 성공적으로 연결되었습니다."); // 확인용 로그
         }
 
         /**
@@ -441,6 +451,7 @@
                 currentTeacher = teacher; // 로그인된 선생님 정보 저장
                 hideLogin(); // 로그인 모달 숨기기
                 showTeacherDashboard(); // 선생님 대시보드 표시
+                renderTeachers(); // 로그인된 선생님 카드에 스타일 적용을 위해 다시 렌더링
             } else {
                 // 로그인 실패 시 오류 메시지 표시
                 const errorDiv = document.getElementById('loginError');
@@ -493,20 +504,20 @@
          * 로그인한 선생님의 상태를 업데이트하고 Firebase Realtime Database에 저장합니다.
          * @param {string} newStatus - 새로 설정할 상태.
          */
-        function updateStatus(newStatus) {
+        async function updateStatus(newStatus) {
             const teacherIndex = teachers.findIndex(t => t.name === currentTeacher.name);
             if (teacherIndex !== -1) {
                 teachers[teacherIndex].status = newStatus; // 로컬 teachers 배열의 상태 업데이트
                 currentTeacher.status = newStatus;         // 현재 로그인된 선생님 객체의 상태도 업데이트
 
-                set(teachersRef, teachers)
-                    .then(() => {
-                        console.log("상태 업데이트 및 Firebase 저장 성공", newStatus);
-                    })
-                    .catch((error) => console.error("상태 업데이트 및 Firebase 저장 오류:", error));
-
-                updateCurrentStatusDisplay();
-                updateStatusButtons();
+                try {
+                    await set(teachersRef, teachers);
+                    console.log("상태 업데이트 및 Firebase 저장 성공", newStatus);
+                    updateCurrentStatusDisplay(); // UI 즉시 업데이트
+                    updateStatusButtons();       // 버튼 상태 즉시 업데이트
+                } catch (error) {
+                    console.error("상태 업데이트 및 Firebase 저장 오류:", error);
+                }
             } else {
                 console.error("현재 로그인된 선생님 정보를 teachers 배열에서 찾을 수 없습니다:", currentTeacher);
             }
@@ -521,7 +532,8 @@
             // 보안을 위해 로그인 필드도 초기화
             document.getElementById('loginName').value = '';
             document.getElementById('loginPassword').value = '';
-            console.log("로그아웃되었습니다.");
+            renderTeachers(); // 로그인된 선생님 카드에 적용된 스타일 제거를 위해 다시 렌더링
+            console.log("로그아웃 버튼에 클릭 리스너가 성공적으로 연결되었습니다."); // 확인용 로그
         }
 
         // --- Q&A 기능 추가 ---
@@ -560,6 +572,7 @@
             document.getElementById('questionError').classList.add('hidden');
             document.getElementById('studentQuestionModal').classList.remove('hidden');
             document.getElementById('studentId').focus();
+            console.log("학생 질문 모달 표시:", teacher.name); // 확인용 로그
         }
 
         /**
@@ -568,6 +581,7 @@
         function hideStudentQuestionModal() {
             selectedTeacherForQuestion = null;
             document.getElementById('studentQuestionModal').classList.add('hidden');
+            console.log("학생 질문 모달 숨김"); // 확인용 로그
         }
 
         /**
@@ -611,7 +625,7 @@
 
                 try {
                     await set(teachersRef, teachers); // 전체 teachers 배열을 업데이트합니다.
-                    console.log("학생 질문이 성공적으로 제출되었습니다.");
+                    console.log("학생 질문이 성공적으로 제출되었습니다.", newMessage);
                     hideStudentQuestionModal();
                     alert("질문이 성공적으로 제출되었습니다.");
                 } catch (error) {
@@ -636,6 +650,7 @@
             document.getElementById('teacherQAModal').classList.remove('hidden');
             // 선생님 대시보드 모달은 숨깁니다.
             document.getElementById('teacherModal').classList.add('hidden');
+            console.log("선생님 Q&A 모달 표시"); // 확인용 로그
         }
 
         /**
@@ -647,6 +662,7 @@
             if (currentTeacher) {
                 showTeacherDashboard();
             }
+            console.log("선생님 Q&A 모달 숨김"); // 확인용 로그
         }
 
         /**
@@ -711,6 +727,7 @@
                     }
                 });
             });
+            console.log("선생님 질문 목록 렌더링 완료"); // 확인용 로그
         }
 
         /**
@@ -800,12 +817,23 @@
                 teachersGrid.addEventListener('click', (event) => {
                     const teacherCard = event.target.closest('.teacher-card');
                     if (teacherCard) {
+                        // 로그인된 선생님 카드는 클릭 이벤트를 무시 (또는 다른 기능 부여)
+                        if (teacherCard.classList.contains('logged-in-teacher')) {
+                            console.log("로그인된 선생님 카드는 학생 질문을 트리거하지 않습니다.");
+                            return; // 로그인된 선생님 카드는 여기서 처리하지 않음
+                        }
+
                         const teacherNameElement = teacherCard.querySelector('.teacher-name');
                         if (teacherNameElement) {
                             const clickedTeacherName = teacherNameElement.textContent;
                             const teacher = teachers.find(t => t.name === clickedTeacherName);
-                            if (teacher && !currentTeacher) { // 로그인된 선생님이 없을 때만 학생 질문 허용
+                            // 로그인된 선생님이 없을 때만 학생 질문 허용
+                            if (teacher && !currentTeacher) {
                                 showStudentQuestionModal(teacher);
+                            } else if (currentTeacher) {
+                                console.log("선생님으로 로그인되어 있어 학생 질문 모달을 열 수 없습니다.");
+                            } else {
+                                console.log("클릭한 선생님 정보를 찾을 수 없습니다.");
                             }
                         }
                     }
