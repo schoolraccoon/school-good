@@ -310,6 +310,7 @@
                     </div>
                 <div id="publicQuestionsEmpty" class="error-message hidden" style="text-align: center; margin-top: 1rem;">아직 이 선생님에게 온 질문이 없습니다.</div>
                 <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button type="button" class="btn btn-primary" id="askQuestionFromViewModalBtn" style="flex: 1;">질문하기</button>
                     <button type="button" class="btn btn-outline" id="viewQuestionsCloseBtn" style="flex: 1;">닫기</button>
                 </div>
             </div>
@@ -925,6 +926,17 @@
             const viewQuestionsCloseBtn = document.getElementById('viewQuestionsCloseBtn');
             if (viewQuestionsCloseBtn) {
                 viewQuestionsCloseBtn.addEventListener('click', hideViewQuestionsModal);
+            }
+
+            // 새로 추가된 '질문하기' 버튼 이벤트 리스너
+            const askQuestionFromViewModalBtn = document.getElementById('askQuestionFromViewModalBtn');
+            if (askQuestionFromViewModalBtn) {
+                askQuestionFromViewModalBtn.addEventListener('click', () => {
+                    // 현재 보고 있는 선생님에게 질문하도록 selectedTeacherForQuestion 설정
+                    selectedTeacherForQuestion = selectedTeacherForView; 
+                    hideViewQuestionsModal(); // 질문 목록 모달 닫기
+                    showQuestionModal(); // 질문 작성 모달 열기
+                });
             }
         });
     </script>
