@@ -108,16 +108,29 @@
             color: #6b7280;
             margin-bottom: 0.5rem;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            padding-right: 60px;
+            justify-content: space-between; /* 양 끝 정렬 */
+            align-items: flex-start; /* 상단 정렬 */
+            flex-wrap: wrap; /* 내용이 많아지면 줄 바꿈 허용 */
+            position: relative; /* 삭제 버튼 위치 조정을 위해 추가 */
+            /* 기존 padding-right: 60px; 대신 flexbox와 gap으로 공간 확보 */
+            gap: 0.5rem; /* 요소 간의 간격 추가 */
+        }
+        .question-meta .student-info {
+            flex-grow: 1; /* 학생 정보가 최대한 공간을 차지하도록 */
+            white-space: nowrap; /* 학번/이름이 한 줄에 있도록 */
+            overflow: hidden; /* 넘치는 내용은 숨김 */
+            text-overflow: ellipsis; /* 넘치는 내용은 ...으로 표시 */
+        }
+        .question-meta .datetime-info {
+            white-space: nowrap; /* 시간 정보가 한 줄에 있도록 */
+            margin-left: auto; /* 시간 정보를 오른쪽으로 밀어냄 */
         }
         .question-meta .delete-button-container {
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
+            position: absolute; /* 절대 위치 */
+            right: 0; /* 오른쪽 끝에 배치 */
+            top: 50%; /* 수직 중앙 정렬 */
+            transform: translateY(-50%); /* 정확한 수직 중앙 정렬 */
+            z-index: 10; /* 다른 요소 위에 오도록 */
         }
         .delete-button {
             background: #ef4444;
@@ -132,6 +145,7 @@
             display: inline-flex;
             align-items: center;
             gap: 0.25rem;
+            white-space: nowrap; /* 버튼 내용이 줄 바꿈되지 않도록 */
         }
 
         .delete-button:hover {
@@ -694,19 +708,18 @@
             }
 
             myQuestions.forEach(question => {
-                const questionCard = document.createElement('div');
-                questionCard.className = 'question-card';
-
                 const questionTime = new Date(question.timestamp).toLocaleString('ko-KR', {
                     year: 'numeric', month: '2-digit', day: '2-digit',
                     hour: '2-digit', minute: '2-digit', hour12: false
                 });
 
+                const questionCard = document.createElement('div');
+                questionCard.className = 'question-card';
                 questionCard.innerHTML = `
                     <div class="question-meta">
-                        <span><strong>학번:</strong> ${question.studentId} | <strong>이름:</strong> ${question.studentName}</span>
+                        <span class="student-info"><strong>학번:</strong> ${question.studentId} | <strong>이름:</strong> ${question.studentName}</span>
+                        <span class="datetime-info">${questionTime}</span>
                         <span class="delete-button-container">
-                            ${questionTime}
                             <button class="delete-button" data-question-id="${question.id}">🗑️ 삭제</button>
                         </span>
                     </div>
@@ -715,10 +728,12 @@
                         <div class="answer-section">
                             <strong>선생님 답변:</strong>
                             <div class="answer-text">${question.answer}</div>
-                            <div class="question-meta" style="justify-content: flex-end; margin-top: 0.5rem;">답변 시간: ${new Date(question.answerTimestamp).toLocaleString('ko-KR', {
-                                year: 'numeric', month: '2-digit', day: '2-digit',
-                                hour: '2-digit', minute: '2-digit', hour12: false
-                            })}</div>
+                            <div class="question-meta" style="justify-content: flex-end; margin-top: 0.5rem;">
+                                <span class="datetime-info">답변 시간: ${new Date(question.answerTimestamp).toLocaleString('ko-KR', {
+                                    year: 'numeric', month: '2-digit', day: '2-digit',
+                                    hour: '2-digit', minute: '2-digit', hour12: false
+                                })}</span>
+                            </div>
                         </div>
                     ` : `
                         <div class="answer-input-group">
@@ -832,18 +847,20 @@
 
                 questionCard.innerHTML = `
                     <div class="question-meta">
-                        <span><strong>학번:</strong> ${question.studentId} | <strong>이름:</strong> ${question.studentName}</span>
-                        <span>${questionTime}</span>
+                        <span class="student-info"><strong>학번:</strong> ${question.studentId} | <strong>이름:</strong> ${question.studentName}</span>
+                        <span class="datetime-info">${questionTime}</span>
                     </div>
                     <div class="question-text">${question.questionText}</div>
                     ${question.answer ? `
                         <div class="answer-section">
                             <strong>선생님 답변:</strong>
                             <div class="answer-text">${question.answer}</div>
-                            <div class="question-meta" style="justify-content: flex-end; margin-top: 0.5rem;">답변 시간: ${new Date(question.answerTimestamp).toLocaleString('ko-KR', {
-                                year: 'numeric', month: '2-digit', day: '2-digit',
-                                hour: '2-digit', minute: '2-digit', hour12: false
-                            })}</div>
+                            <div class="question-meta" style="justify-content: flex-end; margin-top: 0.5rem;">
+                                <span class="datetime-info">답변 시간: ${new Date(question.answerTimestamp).toLocaleString('ko-KR', {
+                                    year: 'numeric', month: '2-digit', day: '2-digit',
+                                    hour: '2-digit', minute: '2-digit', hour12: false
+                                })}</span>
+                            </div>
                         </div>
                     ` : `
                         <p style="font-size: 0.875rem; color: #6b7280; margin-top: 1rem;">아직 답변이 등록되지 않았습니다.</p>
