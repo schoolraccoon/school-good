@@ -24,13 +24,17 @@
         .header p { color: #6b7280; font-size: 1rem; }
 
         /* 버튼 스타일 */
-        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; justify-content: center; /* 버튼 텍스트 중앙 정렬 */ }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; justify-content: center; }
         .btn-primary { background: #4f46e5; color: white; }
         .btn-primary:hover { background: #4338ca; }
         .btn-outline { background: transparent; border: 2px solid #d1d5db; color: #374151; }
         .btn-outline:hover { background: #f9fafb; }
         .btn-danger { background: #ef4444; color: white; }
         .btn-danger:hover { background: #dc2626; }
+        .btn-info { background: #3b82f6; color: white; }
+        .btn-info:hover { background: #2563eb; }
+        .btn-warning { background: #f59e0b; color: white; } /* 알림 버튼 색상 */
+        .btn-warning:hover { background: #d97706; }
 
         /* 통계 그리드 스타일 */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
@@ -118,7 +122,24 @@
         .answer-submit-btn:hover { background: #4338ca; }
         
         /* 질문 목록 보기 모달 */
-        #viewQuestionsModal .modal-content { max-width: 600px; }
+        #viewQuestionsModal .modal-content, #teacherQuestionsModal .modal-content { max-width: 600px; }
+
+        /* 로그인 상태 유지 후 표시되는 버튼들 */
+        #loggedInButtons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        #loggedInButtons .btn {
+            flex-grow: 1;
+            max-width: 250px; /* 버튼 최대 너비 설정 */
+        }
+        #loggedInButtons .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
 
         /* 반응형 디자인 개선 */
         /* 작은 모바일 (320px ~ 480px) */
@@ -127,11 +148,11 @@
             .header h1 { font-size: 1.8rem; }
             .header p { font-size: 0.9rem; }
             .btn { padding: 0.6rem 1rem; font-size: 0.9rem; }
-            .stats-grid { grid-template-columns: 1fr; gap: 0.75rem; } /* 한 줄에 하나 */
+            .stats-grid { grid-template-columns: 1fr; gap: 0.75rem; }
             .stat-card { padding: 1rem; }
             .stat-count { font-size: 1.8rem; }
             .stat-label { font-size: 0.8rem; }
-            .teachers-grid { grid-template-columns: 1fr; gap: 1rem; } /* 한 줄에 하나 */
+            .teachers-grid { grid-template-columns: 1fr; gap: 1rem; }
             .teacher-card { padding: 1.2rem; }
             .teacher-avatar { width: 40px; height: 40px; font-size: 20px; }
             .teacher-name { font-size: 1.1rem; }
@@ -140,29 +161,33 @@
             .modal-content { padding: 1.5rem; width: 95%; max-width: 350px; }
             .modal-icon { width: 50px; height: 50px; font-size: 1.5rem; }
             .form-input, .answer-input { padding: 0.6rem; font-size: 0.9rem; }
-            .status-buttons { grid-template-columns: 1fr; } /* 상태 버튼도 세로로 */
-            .question-meta { padding-right: 0; flex-direction: column; align-items: flex-start; } /* 질문 메타 정보 세로 정렬 */
-            .question-meta .delete-button-container { position: static; transform: none; margin-top: 0.5rem; width: 100%; display: flex; justify-content: flex-end; } /* 삭제 버튼 위치 조정 */
-            .delete-button { width: auto; } /* 삭제 버튼 너비 조절 */
+            .status-buttons { grid-template-columns: 1fr; }
+            .question-meta { padding-right: 0; flex-direction: column; align-items: flex-start; }
+            .question-meta .delete-button-container { position: static; transform: none; margin-top: 0.5rem; width: 100%; display: flex; justify-content: flex-end; }
+            .delete-button { width: auto; }
             .question-text { font-size: 0.95rem; }
-            #questionsList, #publicQuestionsList { max-height: 250px; } /* 작은 화면에서 높이 조절 */
+            #questionsList, #publicQuestionsList { max-height: 250px; }
+            #loggedInButtons { flex-direction: column; align-items: center; }
+            #loggedInButtons .btn { width: 100%; max-width: none; }
         }
 
         /* 중간 크기 태블릿 및 모바일 (481px ~ 768px) */
         @media (min-width: 481px) and (max-width: 768px) {
             .header h1 { font-size: 2.2rem; }
             .btn { padding: 0.7rem 1.2rem; font-size: 0.95rem; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); } /* 한 줄에 두 개 */
-            .teachers-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); } /* 화면에 맞게 2개 또는 3개 */
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .teachers-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
             .modal-content { max-width: 450px; }
             .status-buttons { grid-template-columns: 1fr 1fr; }
             #questionsList, #publicQuestionsList { max-height: 350px; }
+            #loggedInButtons { flex-direction: row; }
         }
 
         /* 작은 데스크탑 및 큰 태블릿 (769px ~ 1024px) */
         @media (min-width: 769px) and (max-width: 1024px) {
             .container { padding: 0 1.5rem; }
-            .teachers-grid { grid-template-columns: repeat(3, 1fr); } /* 한 줄에 세 개 */
+            .teachers-grid { grid-template-columns: repeat(3, 1fr); }
+            #loggedInButtons { flex-direction: row; }
         }
     </style>
 </head>
@@ -174,9 +199,22 @@
                     <h1>선생님 부재중 확인</h1>
                     <p>실시간 선생님 상태를 확인하세요</p>
                 </div>
-                <button class="btn btn-primary" id="loginButton">
-                    🔑 선생님 로그인
-                </button>
+                <div id="authButtons">
+                    <button class="btn btn-primary" id="loginButton">
+                        🔑 선생님 로그인
+                    </button>
+                    <div id="loggedInButtons" class="hidden">
+                        <button class="btn btn-primary btn-small" id="changeMyStatusBtn">
+                            내 상태 변경하기
+                        </button>
+                        <button class="btn btn-info btn-small" id="checkMyQuestionsBtn">
+                            <span id="unansweredQuestionsCount"></span> 질문 확인하기
+                        </button>
+                        <button class="btn btn-outline btn-small" id="logoutButtonLoggedIn">
+                            🚪 로그아웃
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="stats-grid" id="statsGrid">
@@ -243,11 +281,28 @@
                     </div>
                 </div>
                 
-                <button class="btn btn-danger" id="logoutBtn" style="width: 100%; margin-top: 1rem;">
-                    🚪 로그아웃
+                <button type="button" class="btn btn-outline" id="closeTeacherStatusModalBtn" style="width: 100%; margin-top: 1rem;">
+                    닫기
                 </button>
             </div>
         </div>
+
+        <div id="teacherQuestionsModal" class="modal hidden">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <div class="modal-icon">📜</div>
+                    <h2 id="myQuestionsTeacherName"></h2>
+                    <p>선생님께 온 질문 목록입니다.</p>
+                </div>
+                <div id="questionsList">
+                </div>
+                <div id="myQuestionsEmpty" class="error-message hidden" style="text-align: center; margin-top: 1rem;">아직 이 선생님에게 온 질문이 없습니다.</div>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button type="button" class="btn btn-outline" id="closeMyQuestionsModalBtn" style="flex: 1;">닫기</button>
+                </div>
+            </div>
+        </div>
+
 
         <div id="questionModal" class="modal hidden">
             <div class="modal-content">
@@ -300,7 +355,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getDatabase, ref, set, onValue, push, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // Firebase Configuration (이전에 보내주신 값 그대로)
+        // Firebase Configuration (처음 보내주신 값 그대로 유지)
         const firebaseConfig = {
             apiKey: "AIzaSyCr90aSlJxQjRNBMqLlVBunhBIHbyTPa88",
             authDomain: "sssss-8ec7d.firebaseapp.com",
@@ -364,25 +419,22 @@
                         .catch((error) => console.error("초기 데이터 저장 오류:", error));
                     teachers = defaultTeachers;
                 } else {
-                    // Firebase에서 배열 형태로 데이터를 가져올 경우, Object.values()를 사용하여 배열로 변환
-                    // (Firebase Realtime Database는 배열을 저장할 때 객체 형태로 변환하기 때문에 필요)
                     teachers = Object.values(data);
                 }
                 renderStats();
                 renderTeachers();
                 
-                // 현재 로그인된 선생님이 있다면, Firebase 데이터 로드 후 currentTeacher 정보 갱신
+                // 현재 로그인된 선생님이 있다면, Firebase 데이터 로드 후 currentTeacher 정보 갱신 및 UI 업데이트
                 if (currentTeacher) {
                     const updatedCurrentTeacher = teachers.find(t => t.name === currentTeacher.name);
                     if (updatedCurrentTeacher) {
                         currentTeacher = updatedCurrentTeacher;
-                        // 대시보드 모달이 열려있다면 UI 업데이트
+                        updateLoggedInUI(); // 로그인 상태 UI 업데이트
                         if (!document.getElementById('teacherModal').classList.contains('hidden')) {
                             updateCurrentStatusDisplay();
                             updateStatusButtons();
                         }
                     } else {
-                        // 저장된 선생님 정보가 Firebase에서 사라진 경우
                         console.warn("저장된 선생님 정보를 Firebase에서 찾을 수 없어 로그아웃합니다.");
                         logout();
                     }
@@ -398,8 +450,13 @@
                 questions = data ? Object.entries(data).map(([key, value]) => ({ id: key, ...value })) : [];
                 questions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // 최신 질문이 위로 오도록 정렬
                 
-                // 로그인한 선생님 대시보드 질문 목록 업데이트
-                if (currentTeacher && !document.getElementById('teacherModal').classList.contains('hidden')) {
+                // 로그인한 선생님이 있다면, 질문 알림 버튼의 카운트 업데이트
+                if (currentTeacher) {
+                    updateUnansweredQuestionsCount();
+                }
+
+                // 선생님 본인 질문 목록 모달이 열려있다면 업데이트
+                if (!document.getElementById('teacherQuestionsModal').classList.contains('hidden')) {
                     renderTeacherQuestions();
                 }
                 // 질문 리스트 보기 모달이 열려있으면 업데이트
@@ -430,10 +487,10 @@
                 statCard.className = 'stat-card';
                 statCard.innerHTML = `
                     <div class="stat-icon ${config.class}">
-                        <span class="math-inline">\{config\.icon\}
-</div\>
-<div\>
-<div class\="stat\-count"\></span>{count}</div>
+                        ${config.icon}
+                    </div>
+                    <div>
+                        <div class="stat-count">${count}</div>
                         <div class="stat-label">${status}</div>
                     </div>
                 `;
@@ -443,8 +500,6 @@
 
         /**
          * 메인 대시보드에 개별 선생님 카드를 렌더링합니다.
-         * 선생님 카드 클릭 시, 질문 리스트 보기 모달이 기본으로 표시되며,
-         * Ctrl/Command 키를 누른 상태에서는 학생 질문 모달이 표시됩니다.
          */
         function renderTeachers() {
             const teachersGrid = document.getElementById('teachersGrid');
@@ -454,14 +509,14 @@
                 const config = statusConfig[teacher.status];
                 const teacherCard = document.createElement('div');
                 teacherCard.className = 'teacher-card';
-                const subjectIcon = subjectIcons[teacher.subject] || "✏️"; // 기본 아이콘
+                const subjectIcon = subjectIcons[teacher.subject] || "✏️";
                 teacherCard.innerHTML = `
                     <div class="teacher-header">
                         <div class="teacher-avatar">
-                            <span class="math-inline">\{subjectIcon\}
-</div\>
-<div\>
-<div class\="teacher\-name"\></span>{teacher.name}</div>
+                            ${subjectIcon}
+                        </div>
+                        <div>
+                            <div class="teacher-name">${teacher.name}</div>
                             <div class="teacher-subject">${teacher.subject}</div>
                         </div>
                     </div>
@@ -470,17 +525,33 @@
                     </div>
                 `;
                 teacherCard.addEventListener('click', (event) => {
-                    // Ctrl 또는 Command 키를 누른 상태에서 클릭하면 질문하기 모달 표시
-                    if (event.ctrlKey || event.metaKey) { // metaKey는 Mac의 Command 키
+                    if (event.ctrlKey || event.metaKey) { // Ctrl/Command + 클릭 시 질문하기
                         selectedTeacherForQuestion = teacher;
                         showQuestionModal();
-                    } else { // 일반 클릭 시 질문 리스트 보기 모달 표시
+                    } else { // 일반 클릭 시 질문 리스트 보기
                         selectedTeacherForView = teacher;
                         showViewQuestionsModal();
                     }
                 });
                 teachersGrid.appendChild(teacherCard);
             });
+        }
+
+        // --- 로그인 UI 및 상태 관리 ---
+        function updateLoggedInUI() {
+            const loginButton = document.getElementById('loginButton');
+            const loggedInButtons = document.getElementById('loggedInButtons');
+            const checkMyQuestionsBtn = document.getElementById('checkMyQuestionsBtn');
+
+            if (currentTeacher) {
+                loginButton.classList.add('hidden');
+                loggedInButtons.classList.remove('hidden');
+                updateUnansweredQuestionsCount(); // 질문 알림 카운트 업데이트
+            } else {
+                loginButton.classList.remove('hidden');
+                loggedInButtons.classList.add('hidden');
+                checkMyQuestionsBtn.classList.remove('btn-warning'); // 로그아웃 시 알림 색상 제거
+            }
         }
 
         // --- 로그인 모달 관련 함수 ---
@@ -506,17 +577,16 @@
 
             const teacher = teachers.find(t => {
                 const teacherName = t.name.toLowerCase();
-                // "t"를 제거한 이름도 함께 확인
                 const nameMatch = teacherName === name || teacherName.replace('t', '') === name;
                 return nameMatch && t.password === password;
             });
 
             if (teacher) {
                 currentTeacher = teacher;
-                // **로그인 정보 localStorage에 저장**
-                localStorage.setItem('loggedInTeacher', JSON.stringify(teacher));
+                localStorage.setItem('loggedInTeacher', JSON.stringify(teacher)); // 로그인 정보 localStorage에 저장
                 hideLogin();
-                showTeacherDashboard();
+                updateLoggedInUI(); // 로그인 후 UI 업데이트
+                // 선생님 상태 변경 모달을 바로 띄우지 않고, '내 상태 변경하기' 버튼을 누르면 띄우도록 변경
             } else {
                 const errorDiv = document.getElementById('loginError');
                 errorDiv.textContent = '이름 또는 비밀번호가 올바르지 않습니다.';
@@ -524,15 +594,14 @@
             }
         }
 
-        // --- 선생님 대시보드 모달 관련 함수 ---
-        function showTeacherDashboard() {
+        // --- 선생님 상태 변경 모달 관련 함수 ---
+        function showTeacherStatusModal() {
             if (!currentTeacher) return;
 
             document.getElementById('teacherName').textContent = currentTeacher.name + '님';
             document.getElementById('teacherSubject').textContent = currentTeacher.subject + ' 담당';
             updateCurrentStatusDisplay();
             updateStatusButtons();
-            renderTeacherQuestions(); // 질문 목록 다시 렌더링
             document.getElementById('teacherModal').classList.remove('hidden');
         }
 
@@ -544,7 +613,7 @@
         }
 
         function updateStatusButtons() {
-            const buttons = document.querySelectorAll('.status-btn');
+            const buttons = document.querySelectorAll('#teacherModal .status-btn');
             buttons.forEach(btn => {
                 btn.classList.remove('active');
                 const buttonStatus = btn.getAttribute('data-status');
@@ -558,7 +627,7 @@
             const teacherIndex = teachers.findIndex(t => t.name === currentTeacher.name);
             if (teacherIndex !== -1) {
                 teachers[teacherIndex].status = newStatus;
-                currentTeacher.status = newStatus; // 현재 로그인된 선생님 객체도 업데이트
+                currentTeacher.status = newStatus;
 
                 set(teachersRef, teachers)
                     .then(() => {
@@ -568,7 +637,370 @@
 
                 updateCurrentStatusDisplay();
                 updateStatusButtons();
-                // **localStorage에 저장된 선생님 정보도 업데이트**
                 localStorage.setItem('loggedInTeacher', JSON.stringify(currentTeacher));
             } else {
-                console.error("현재 로그인된 선생님
+                console.error("현재 로그인된 선생님 정보를 teachers 배열에서 찾을 수 없습니다:", currentTeacher);
+            }
+        }
+
+        function closeTeacherStatusModal() {
+            document.getElementById('teacherModal').classList.add('hidden');
+            console.log("선생님 상태 변경 모달이 닫혔습니다.");
+        }
+
+        // 로그아웃
+        function logout() {
+            currentTeacher = null;
+            localStorage.removeItem('loggedInTeacher');
+            updateLoggedInUI(); // 로그아웃 후 UI 업데이트
+            // 모든 모달 닫기 (혹시 열려있을 경우)
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('teacherModal').classList.add('hidden');
+            document.getElementById('teacherQuestionsModal').classList.add('hidden');
+            document.getElementById('questionModal').classList.add('hidden');
+            document.getElementById('viewQuestionsModal').classList.add('hidden');
+            console.log("로그아웃되었습니다.");
+        }
+
+        // --- 선생님 본인 질문 목록 모달 관련 함수 ---
+        function updateUnansweredQuestionsCount() {
+            if (!currentTeacher) return;
+            const myQuestions = questions.filter(q => q.teacherName === currentTeacher.name);
+            const unansweredQuestions = myQuestions.filter(q => !q.answer).length;
+            const unansweredQuestionsCountSpan = document.getElementById('unansweredQuestionsCount');
+            const checkMyQuestionsBtn = document.getElementById('checkMyQuestionsBtn');
+
+            if (unansweredQuestions > 0) {
+                unansweredQuestionsCountSpan.textContent = `(${unansweredQuestions}개)`;
+                checkMyQuestionsBtn.classList.add('btn-warning'); // 미답변 있으면 노란색
+                checkMyQuestionsBtn.classList.remove('btn-info');
+            } else {
+                unansweredQuestionsCountSpan.textContent = ``;
+                checkMyQuestionsBtn.classList.add('btn-info'); // 답변 완료했으면 파란색
+                checkMyQuestionsBtn.classList.remove('btn-warning');
+            }
+        }
+
+        function showTeacherQuestionsModal() {
+            if (!currentTeacher) return;
+            document.getElementById('myQuestionsTeacherName').textContent = currentTeacher.name + ' 선생님께 온 질문';
+            renderTeacherQuestions();
+            document.getElementById('teacherQuestionsModal').classList.remove('hidden');
+            updateUnansweredQuestionsCount(); // 모달 열 때 알림 갱신
+        }
+
+        function hideTeacherQuestionsModal() {
+            document.getElementById('teacherQuestionsModal').classList.add('hidden');
+        }
+
+        function renderTeacherQuestions() {
+            const questionsList = document.getElementById('questionsList');
+            const myQuestionsEmpty = document.getElementById('myQuestionsEmpty');
+            questionsList.innerHTML = '';
+
+            const myQuestions = questions.filter(q => q.teacherName === currentTeacher.name);
+
+            if (myQuestions.length === 0) {
+                myQuestionsEmpty.classList.remove('hidden');
+                questionsList.classList.add('hidden');
+                return;
+            } else {
+                myQuestionsEmpty.classList.add('hidden');
+                questionsList.classList.remove('hidden');
+            }
+
+            myQuestions.forEach(question => {
+                const questionTime = new Date(question.timestamp).toLocaleString('ko-KR', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', hour12: false
+                });
+
+                const questionCard = document.createElement('div');
+                questionCard.className = 'question-card';
+                questionCard.innerHTML = `
+                    <div class="question-meta">
+                        <span class="student-info"><strong>학번:</strong> ${question.studentId} | <strong>이름:</strong> ${question.studentName}</span>
+                        <span class="datetime-info">${questionTime}</span>
+                        <span class="delete-button-container">
+                            <button class="delete-button" data-question-id="${question.id}">🗑️ 삭제</button>
+                        </span>
+                    </div>
+                    <div class="question-text">${question.questionText}</div>
+                    ${question.answer ? `
+                        <div class="answer-section">
+                            <strong>선생님 답변:</strong>
+                            <div class="answer-text">${question.answer}</div>
+                            <div class="question-meta" style="justify-content: flex-end; margin-top: 0.5rem; padding-right: 0;">
+                                <span class="datetime-info">답변 시간: ${new Date(question.answerTimestamp).toLocaleString('ko-KR', {
+                                    year: 'numeric', month: '2-digit', day: '2-digit',
+                                    hour: '2-digit', minute: '2-digit', hour12: false
+                                })}</span>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="answer-input-group">
+                            <textarea class="answer-input" rows="3" placeholder="답변을 입력하세요."></textarea>
+                            <button class="answer-submit-btn" data-question-id="${question.id}">답변 제출</button>
+                        </div>
+                    `}
+                `;
+                questionsList.appendChild(questionCard);
+            });
+
+            // 답변 제출 버튼 이벤트 리스너
+            questionsList.querySelectorAll('.answer-submit-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const questionId = event.target.getAttribute('data-question-id');
+                    const answerInput = event.target.previousElementSibling;
+                    const answerText = answerInput.value.trim();
+
+                    if (answerText) {
+                        submitAnswer(questionId, answerText);
+                    } else {
+                        alert('답변 내용을 입력해주세요.');
+                    }
+                });
+            });
+
+            // 삭제 버튼 이벤트 리스너
+            questionsList.querySelectorAll('.delete-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const questionId = event.target.getAttribute('data-question-id');
+                    if (confirm('정말로 이 질문을 삭제하시겠습니까?')) {
+                        deleteQuestion(questionId);
+                    }
+                });
+            });
+        }
+
+        function submitAnswer(questionId, answerText) {
+            const questionRef = ref(database, `questions/${questionId}`);
+            update(questionRef, {
+                answer: answerText,
+                answerTimestamp: new Date().toISOString()
+            })
+            .then(() => {
+                console.log(`질문 ${questionId}에 대한 답변이 성공적으로 제출되었습니다.`);
+                alert('답변이 성공적으로 등록되었습니다.');
+            })
+            .catch((error) => {
+                console.error(`질문 ${questionId} 답변 제출 오류:`, error);
+                alert('답변 등록에 실패했습니다. 다시 시도해주세요.');
+            });
+        }
+
+        /**
+         * 특정 질문을 Firebase에서 삭제합니다.
+         */
+        function deleteQuestion(questionId) {
+            const questionToRemoveRef = ref(database, `questions/${questionId}`);
+            remove(questionToRemoveRef)
+                .then(() => {
+                    console.log(`질문 ${questionId}가 성공적으로 삭제되었습니다.`);
+                    alert('질문이 삭제되었습니다.');
+                })
+                .catch((error) => {
+                    console.error(`질문 ${questionId} 삭제 오류:`, error);
+                    alert('질문 삭제에 실패했습니다. 다시 시도해주세요.');
+                });
+        }
+
+        // --- 질문 리스트 보기 모달 관련 함수 (모든 사용자) ---
+        function showViewQuestionsModal() {
+            if (!selectedTeacherForView) return;
+
+            document.getElementById('viewQuestionsTeacherName').textContent = selectedTeacherForView.name + ' 선생님의 질문 목록';
+            renderPublicQuestions(selectedTeacherForView.name);
+            document.getElementById('viewQuestionsModal').classList.remove('hidden');
+        }
+
+        function hideViewQuestionsModal() {
+            document.getElementById('viewQuestionsModal').classList.add('hidden');
+            selectedTeacherForView = null;
+        }
+
+        /**
+         * 모든 사용자를 위한 질문 목록을 렌더링합니다. (삭제/답변 입력 기능 없음)
+         */
+        function renderPublicQuestions(teacherName) {
+            const publicQuestionsList = document.getElementById('publicQuestionsList');
+            const publicQuestionsEmpty = document.getElementById('publicQuestionsEmpty');
+            publicQuestionsList.innerHTML = '';
+
+            const teacherSpecificQuestions = questions.filter(q => q.teacherName === teacherName);
+
+            if (teacherSpecificQuestions.length === 0) {
+                publicQuestionsEmpty.classList.remove('hidden');
+                publicQuestionsList.classList.add('hidden');
+                return;
+            } else {
+                publicQuestionsEmpty.classList.add('hidden');
+                publicQuestionsList.classList.remove('hidden');
+            }
+
+            teacherSpecificQuestions.forEach(question => {
+                const questionCard = document.createElement('div');
+                questionCard.className = 'question-card';
+
+                const questionTime = new Date(question.timestamp).toLocaleString('ko-KR', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', hour12: false
+                });
+
+                questionCard.innerHTML = `
+                    <div class="question-meta">
+                        <span class="student-info"><strong>학번:</strong> ${question.studentId} | <strong>이름:</strong> ${question.studentName}</span>
+                        <span class="datetime-info">${questionTime}</span>
+                    </div>
+                    <div class="question-text">${question.questionText}</div>
+                    ${question.answer ? `
+                        <div class="answer-section">
+                            <strong>선생님 답변:</strong>
+                            <div class="answer-text">${question.answer}</div>
+                            <div class="question-meta" style="justify-content: flex-end; margin-top: 0.5rem; padding-right: 0;">
+                                <span class="datetime-info">답변 시간: ${new Date(question.answerTimestamp).toLocaleString('ko-KR', {
+                                    year: 'numeric', month: '2-digit', day: '2-digit',
+                                    hour: '2-digit', minute: '2-digit', hour12: false
+                                })}</span>
+                            </div>
+                        </div>
+                    ` : `
+                        <p style="font-size: 0.875rem; color: #6b7280; margin-top: 1rem;">아직 답변이 등록되지 않았습니다.</p>
+                    `}
+                `;
+                publicQuestionsList.appendChild(questionCard);
+            });
+        }
+
+        // --- 초기 로드 및 이벤트 리스너 설정 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFirebaseDataListener();
+
+            // 로그인 유지 기능: 페이지 로드 시 localStorage 확인
+            const storedTeacher = localStorage.getItem('loggedInTeacher');
+            if (storedTeacher) {
+                try {
+                    currentTeacher = JSON.parse(storedTeacher);
+                    console.log("이전 로그인 정보로 자동 로그인 시도:", currentTeacher.name);
+                    const checkInterval = setInterval(() => {
+                        if (teachers.length > 0) {
+                            clearInterval(checkInterval);
+                            const updatedCurrentTeacher = teachers.find(t => t.name === currentTeacher.name);
+                            if (updatedCurrentTeacher) {
+                                currentTeacher = updatedCurrentTeacher;
+                                updateLoggedInUI(); // 자동 로그인 성공 시 UI 업데이트
+                            } else {
+                                console.warn("저장된 선생님 정보를 Firebase에서 찾을 수 없어 자동 로그인을 해제합니다.");
+                                logout();
+                            }
+                        }
+                    }, 100);
+                } catch (e) {
+                    console.error("저장된 로그인 정보 파싱 오류:", e);
+                    localStorage.removeItem('loggedInTeacher');
+                }
+            } else {
+                updateLoggedInUI(); // 로그인 안 된 상태 UI
+            }
+
+            // 로그인 버튼 이벤트 리스너
+            const loginButton = document.getElementById('loginButton');
+            if (loginButton) {
+                loginButton.addEventListener('click', showLogin);
+            }
+
+            // 로그인 폼 제출 이벤트 리스너
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleLogin);
+            }
+
+            // 로그인 취소 버튼 이벤트 리스너
+            const loginCancelBtn = document.getElementById('loginCancelBtn');
+            if (loginCancelBtn) {
+                loginCancelBtn.addEventListener('click', hideLogin);
+            }
+
+            // Enter 키 입력 시 로그인 처리
+            document.addEventListener('keydown', function(event) {
+                const loginModal = document.getElementById('loginModal');
+                if (event.key === 'Enter' && !loginModal.classList.contains('hidden')) {
+                    loginForm.dispatchEvent(new Event('submit'));
+                }
+            });
+
+            // "내 상태 변경하기" 버튼 (새로 추가)
+            const changeMyStatusBtn = document.getElementById('changeMyStatusBtn');
+            if (changeMyStatusBtn) {
+                changeMyStatusBtn.addEventListener('click', showTeacherStatusModal);
+            }
+
+            // 상태 변경 모달 내 상태 변경 버튼 이벤트 리스너
+            const statusButtons = document.querySelectorAll('#teacherModal .status-btn'); // #teacherModal 내부만 선택
+            statusButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const newStatus = btn.getAttribute('data-status');
+                    if (newStatus) {
+                        updateStatus(newStatus);
+                    }
+                });
+            });
+
+            // 상태 변경 모달 닫기 버튼
+            const closeTeacherStatusModalBtn = document.getElementById('closeTeacherStatusModalBtn');
+            if (closeTeacherStatusModalBtn) {
+                closeTeacherStatusModalBtn.addEventListener('click', closeTeacherStatusModal);
+            }
+
+            // "질문 확인하기" 버튼 (새로 추가)
+            const checkMyQuestionsBtn = document.getElementById('checkMyQuestionsBtn');
+            if (checkMyQuestionsBtn) {
+                checkMyQuestionsBtn.addEventListener('click', showTeacherQuestionsModal);
+            }
+
+            // 로그아웃 버튼 (로그인 후 표시되는 버튼)
+            const logoutButtonLoggedIn = document.getElementById('logoutButtonLoggedIn');
+            if (logoutButtonLoggedIn) {
+                logoutButtonLoggedIn.addEventListener('click', logout);
+            }
+
+            // --- 학생 질문 모달 관련 이벤트 리스너 ---
+            const questionForm = document.getElementById('questionForm');
+            if (questionForm) {
+                questionForm.addEventListener('submit', handleQuestionSubmit);
+            }
+
+            const questionCancelBtn = document.getElementById('questionCancelBtn');
+            if (questionCancelBtn) {
+                questionCancelBtn.addEventListener('click', hideQuestionModal);
+            }
+
+            // Enter 키 입력 시 질문 제출 처리
+            document.addEventListener('keydown', function(event) {
+                const questionModal = document.getElementById('questionModal');
+                if (event.key === 'Enter' && !questionModal.classList.contains('hidden')) {
+                    if (document.activeElement.tagName !== 'TEXTAREA') {
+                        questionForm.dispatchEvent(new Event('submit'));
+                    }
+                }
+            });
+
+            // --- 질문 리스트 보기 모달 관련 이벤트 리스너 (모든 사용자) ---
+            const viewQuestionsCloseBtn = document.getElementById('viewQuestionsCloseBtn');
+            if (viewQuestionsCloseBtn) {
+                viewQuestionsCloseBtn.addEventListener('click', hideViewQuestionsModal);
+            }
+
+            // '질문하기' 버튼 이벤트 리스너 (질문 목록 모달 내)
+            const askQuestionFromViewModalBtn = document.getElementById('askQuestionFromViewModalBtn');
+            if (askQuestionFromViewModalBtn) {
+                askQuestionFromViewModalBtn.addEventListener('click', () => {
+                    selectedTeacherForQuestion = selectedTeacherForView;
+                    hideViewQuestionsModal();
+                    showQuestionModal();
+                });
+            }
+        });
+    </script>
+</body>
+</html>
