@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>선생님 부재중 확인 시스템 - 실시간 동기화 (Firebase)</title>
+    <title>선생님 부재중 확인 시스템</title>
 
     <meta name="theme-color" content="#4f46e5">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,200 +13,157 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%8F%EF%B8%8F%3C/text%3E%3C/svg%3E">
 
     <style>
+        /* 기본 스타일 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #f1f5f9 0%, #dbeafe 100%); min-height: 100vh; padding: 1rem; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #f1f5f9 0%, #dbeafe 100%); min-height: 100vh; padding: 1rem; color: #374151; }
         .container { max-width: 1200px; margin: 0 auto; }
+
+        /* 헤더 스타일 */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
         .header h1 { font-size: 2.5rem; color: #1f2937; margin-bottom: 0.5rem; }
         .header p { color: #6b7280; font-size: 1rem; }
-        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+
+        /* 버튼 스타일 */
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; justify-content: center; /* 버튼 텍스트 중앙 정렬 */ }
         .btn-primary { background: #4f46e5; color: white; }
         .btn-primary:hover { background: #4338ca; }
         .btn-outline { background: transparent; border: 2px solid #d1d5db; color: #374151; }
         .btn-outline:hover { background: #f9fafb; }
         .btn-danger { background: #ef4444; color: white; }
         .btn-danger:hover { background: #dc2626; }
+
+        /* 통계 그리드 스타일 */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
         .stat-card { background: rgba(255, 255, 255, 0.8); padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); display: flex; align-items: center; gap: 1rem; }
         .stat-icon { width: 48px; height: 48px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; }
         .stat-count { font-size: 2rem; font-weight: bold; color: #1f2937; }
         .stat-label { font-size: 0.875rem; color: #6b7280; }
+
+        /* 선생님 카드 그리드 스타일 */
         .teachers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
         .teacher-card { background: rgba(255, 255, 255, 0.9); border-radius: 1rem; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer; }
         .teacher-card:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
         .teacher-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
         .teacher-avatar {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 24px;
+            width: 48px; height: 48px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 24px;
         }
         .teacher-name { font-size: 1.25rem; font-weight: bold; color: #1f2937; }
         .teacher-subject { font-size: 0.875rem; color: #6b7280; }
+
+        /* 상태 뱃지 스타일 */
         .status-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; border: 1px solid; }
         .status-office { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
         .status-class { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
         .status-away { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
         .status-not-school { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
-        .login-modal, .dashboard-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+
+        /* 모달 공통 스타일 */
+        .modal, .dashboard-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
         .modal-content { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 2rem; border-radius: 1rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); width: 90%; max-width: 400px; }
         .modal-header { text-align: center; margin-bottom: 2rem; }
-        .modal-icon { width: 64px; height: 64px; background: #e0e7ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: #4f46e5; }
+        .modal-icon { width: 64px; height: 64px; background: #e0e7ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: #4f46e5; font-size: 2rem; }
         .form-group { margin-bottom: 1rem; }
         .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
         .form-input { width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; transition: border-color 0.3s ease; }
         .form-input:focus { outline: none; border-color: #4f46e5; }
-        .error-message { background: #fee2e2; color: #991b1b; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.875rem; }
+        .error-message { background: #fee2e2; color: #991b1b; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.875rem; text-align: center;}
+        .hidden { display: none; }
+
+        /* 선생님 대시보드 특정 스타일 */
         .current-status { background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; }
         .status-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.5rem; }
         .status-btn {
-            padding: 0.75rem;
-            border: 2px solid #d1d5db;
-            background: white;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
-            transition: all 0.3s ease;
+            padding: 0.75rem; border: 2px solid #d1d5db; background: white; border-radius: 0.5rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.875rem; transition: all 0.3s ease;
         }
         .status-btn.active { background: #4f46e5; color: white; border-color: #4f46e5; }
         .status-btn:hover { background: #f9fafb; }
         .status-btn.active:hover { background: #4338ca; }
-        .hidden { display: none; }
-        @media (max-width: 768px) { .header h1 { font-size: 2rem; } .stats-grid { grid-template-columns: 1fr 1fr; } .teachers-grid { grid-template-columns: 1fr; } }
-
+        
         /* 질문 및 답변 섹션 */
-        .questions-section {
-            margin-top: 1.5rem;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 1.5rem;
-        }
-        .questions-section h3 {
-            font-size: 1.25rem;
-            color: #1f2937;
-            margin-bottom: 1rem;
-        }
-        .question-card {
-            background: #f9fafb;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        }
+        .questions-section { margin-top: 1.5rem; border-top: 1px solid #e5e7eb; padding-top: 1.5rem; }
+        .questions-section h3 { font-size: 1.25rem; color: #1f2937; margin-bottom: 1rem; }
+        #questionsList, #publicQuestionsList { max-height: 300px; overflow-y: auto; padding-right: 10px; margin-bottom: 1rem; } /* 스크롤바 영역 */
+
+        .question-card { background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
         .question-meta {
-            font-size: 0.875rem;
-            color: #6b7280;
-            margin-bottom: 0.5rem;
-            display: flex;
-            justify-content: space-between; /* 양 끝 정렬 */
-            align-items: flex-start; /* 상단 정렬 */
-            flex-wrap: wrap; /* 내용이 많아지면 줄 바꿈 허용 */
-            position: relative; /* 삭제 버튼 위치 조정을 위해 추가 */
-            gap: 0.5rem; /* 요소 간의 간격 추가 */
+            font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            flex-wrap: wrap; gap: 0.5rem; position: relative;
             padding-right: 70px; /* 삭제 버튼 공간 확보 */
         }
-        .question-meta .student-info {
-            flex-grow: 1; /* 학생 정보가 최대한 공간을 차지하도록 */
-            white-space: nowrap; /* 학번/이름이 한 줄에 있도록 */
-            overflow: hidden; /* 넘치는 내용은 숨김 */
-            text-overflow: ellipsis; /* 넘치는 내용은 ...으로 표시 */
-        }
-        .question-meta .datetime-info {
-            white-space: nowrap; /* 시간 정보가 한 줄에 있도록 */
-            /* margin-left: auto; */ /* 삭제 버튼 위치 조정으로 인해 제거 */
-        }
+        .question-meta .student-info { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .question-meta .datetime-info { white-space: nowrap; }
         .question-meta .delete-button-container {
-            position: absolute; /* 절대 위치 */
-            right: 0; /* 오른쪽 끝에 배치 */
-            top: 50%; /* 수직 중앙 정렬 */
-            transform: translateY(-50%); /* 정확한 수직 중앙 정렬 */
-            z-index: 10; /* 다른 요소 위에 오도록 */
+            position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 10;
         }
         .delete-button {
-            background: #ef4444;
-            color: white;
-            border: none;
-            border-radius: 0.375rem;
-            padding: 0.375rem 0.75rem;
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-            margin-left: 0.5rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            white-space: nowrap; /* 버튼 내용이 줄 바꿈되지 않도록 */
+            background: #ef4444; color: white; border: none; border-radius: 0.375rem;
+            padding: 0.375rem 0.75rem; font-size: 0.75rem; cursor: pointer;
+            transition: background-color 0.2s ease-in-out; margin-left: 0.5rem;
+            display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;
         }
-
-        .delete-button:hover {
-            background: #dc2626;
-        }
-
-        .question-text {
-            font-size: 1rem;
-            color: #374151;
-            line-height: 1.5;
-            margin-bottom: 1rem;
-            white-space: pre-wrap;
-        }
-        .answer-section {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px dashed #d1d5db;
-        }
-        .answer-section strong {
-            color: #4f46e5;
-        }
-        .answer-text {
-            color: #1f2937;
-            margin-top: 0.5rem;
-            white-space: pre-wrap;
-        }
-        .answer-input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-        .answer-input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            font-size: 0.9rem;
-            resize: vertical;
-        }
+        .delete-button:hover { background: #dc2626; }
+        .question-text { font-size: 1rem; color: #374151; line-height: 1.5; margin-bottom: 1rem; white-space: pre-wrap; }
+        .answer-section { margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed #d1d5db; }
+        .answer-section strong { color: #4f46e5; }
+        .answer-text { color: #1f2937; margin-top: 0.5rem; white-space: pre-wrap; }
+        .answer-input-group { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+        .answer-input { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.9rem; resize: vertical; }
         .answer-submit-btn {
-            background: #4f46e5;
-            color: white;
-            padding: 0.75rem 1rem;
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.3s ease;
+            background: #4f46e5; color: white; padding: 0.75rem 1rem; border: none; border-radius: 0.5rem;
+            cursor: pointer; font-weight: 600; transition: background 0.3s ease;
         }
-        .answer-submit-btn:hover {
-            background: #4338ca;
+        .answer-submit-btn:hover { background: #4338ca; }
+        
+        /* 질문 목록 보기 모달 */
+        #viewQuestionsModal .modal-content { max-width: 600px; }
+
+        /* 반응형 디자인 개선 */
+        /* 작은 모바일 (320px ~ 480px) */
+        @media (max-width: 480px) {
+            body { padding: 0.5rem; }
+            .header h1 { font-size: 1.8rem; }
+            .header p { font-size: 0.9rem; }
+            .btn { padding: 0.6rem 1rem; font-size: 0.9rem; }
+            .stats-grid { grid-template-columns: 1fr; gap: 0.75rem; } /* 한 줄에 하나 */
+            .stat-card { padding: 1rem; }
+            .stat-count { font-size: 1.8rem; }
+            .stat-label { font-size: 0.8rem; }
+            .teachers-grid { grid-template-columns: 1fr; gap: 1rem; } /* 한 줄에 하나 */
+            .teacher-card { padding: 1.2rem; }
+            .teacher-avatar { width: 40px; height: 40px; font-size: 20px; }
+            .teacher-name { font-size: 1.1rem; }
+            .teacher-subject { font-size: 0.8rem; }
+            .status-badge { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+            .modal-content { padding: 1.5rem; width: 95%; max-width: 350px; }
+            .modal-icon { width: 50px; height: 50px; font-size: 1.5rem; }
+            .form-input, .answer-input { padding: 0.6rem; font-size: 0.9rem; }
+            .status-buttons { grid-template-columns: 1fr; } /* 상태 버튼도 세로로 */
+            .question-meta { padding-right: 0; flex-direction: column; align-items: flex-start; } /* 질문 메타 정보 세로 정렬 */
+            .question-meta .delete-button-container { position: static; transform: none; margin-top: 0.5rem; width: 100%; display: flex; justify-content: flex-end; } /* 삭제 버튼 위치 조정 */
+            .delete-button { width: auto; } /* 삭제 버튼 너비 조절 */
+            .question-text { font-size: 0.95rem; }
+            #questionsList, #publicQuestionsList { max-height: 250px; } /* 작은 화면에서 높이 조절 */
         }
 
-        /* 선생님 대시보드 내 질문 목록 스크롤 */
-        #questionsList {
-        max-height: 300px; /* 원하는 최대 높이로 조절하세요 */
-        overflow-y: auto; /* 내용이 넘칠 경우 세로 스크롤바 표시 */
-        padding-right: 10px; /* 스크롤바 때문에 내용이 가려지지 않도록 패딩 추가 */
-        margin-bottom: 1rem; /* 아래쪽 여백 추가 */
-}
+        /* 중간 크기 태블릿 및 모바일 (481px ~ 768px) */
+        @media (min-width: 481px) and (max-width: 768px) {
+            .header h1 { font-size: 2.2rem; }
+            .btn { padding: 0.7rem 1.2rem; font-size: 0.95rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); } /* 한 줄에 두 개 */
+            .teachers-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); } /* 화면에 맞게 2개 또는 3개 */
+            .modal-content { max-width: 450px; }
+            .status-buttons { grid-template-columns: 1fr 1fr; }
+            #questionsList, #publicQuestionsList { max-height: 350px; }
+        }
+
+        /* 작은 데스크탑 및 큰 태블릿 (769px ~ 1024px) */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container { padding: 0 1.5rem; }
+            .teachers-grid { grid-template-columns: repeat(3, 1fr); } /* 한 줄에 세 개 */
+        }
     </style>
 </head>
 <body>
@@ -223,13 +180,13 @@
             </div>
 
             <div class="stats-grid" id="statsGrid">
-                </div>
+            </div>
 
             <div class="teachers-grid" id="teachersGrid">
-                </div>
+            </div>
         </div>
 
-        <div id="loginModal" class="login-modal hidden">
+        <div id="loginModal" class="modal hidden">
             <div class="modal-content">
                 <div class="modal-header">
                     <div class="modal-icon">🔑</div>
@@ -238,11 +195,11 @@
                 </div>
                 <form id="loginForm">
                     <div class="form-group">
-                        <label class="form-label">이름</label>
-                        <input type="text" class="form-input" id="loginName" placeholder="이름을 입력해주세요" required>
+                        <label class="form-label" for="loginName">이름</label>
+                        <input type="text" class="form-input" id="loginName" placeholder="이름을 입력해주세요 (예: 이명용T)" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">비밀번호</label>
+                        <label class="form-label" for="loginPassword">비밀번호</label>
                         <input type="password" class="form-input" id="loginPassword" placeholder="비밀번호를 입력하세요" required>
                     </div>
                     <div id="loginError" class="error-message hidden"></div>
@@ -292,7 +249,7 @@
             </div>
         </div>
 
-        <div id="questionModal" class="login-modal hidden">
+        <div id="questionModal" class="modal hidden">
             <div class="modal-content">
                 <div class="modal-header">
                     <div class="modal-icon">💬</div>
@@ -321,15 +278,15 @@
             </div>
         </div>
 
-        <div id="viewQuestionsModal" class="login-modal hidden">
+        <div id="viewQuestionsModal" class="modal hidden">
             <div class="modal-content" style="max-width: 600px;">
                 <div class="modal-header">
                     <div class="modal-icon">📜</div>
                     <h2 id="viewQuestionsTeacherName"></h2>
                     <p>선생님께 남겨진 질문들을 확인하세요.</p>
                 </div>
-                <div id="publicQuestionsList" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
-                    </div>
+                <div id="publicQuestionsList">
+                </div>
                 <div id="publicQuestionsEmpty" class="error-message hidden" style="text-align: center; margin-top: 1rem;">아직 이 선생님에게 온 질문이 없습니다.</div>
                 <div style="display: flex; gap: 1rem; margin-top: 1rem;">
                     <button type="button" class="btn btn-primary" id="askQuestionFromViewModalBtn" style="flex: 1;">질문하기</button>
@@ -340,20 +297,19 @@
     </div>
 
     <script type="module">
-        // Firebase SDK 초기화 부분
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, push, update, remove } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, set, onValue, push, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // Firebase Configuration (제공해주신 것과 동일)
+        // Firebase Configuration: 여기에 사용자 본인의 Firebase 프로젝트 설정 값을 입력하세요.
         const firebaseConfig = {
-            apiKey: "AIzaSyCr90aSlJxQjRNBMqLlVBunhBIHbyTPa88",
-            authDomain: "sssss-8ec7d.firebaseapp.com",
-            databaseURL: "https://sssss-8ec7d-default-rtdb.firebaseio.com",
-            projectId: "sssss-8ec7d",
-            storageBucket: "sssss-8ec7d.firebasestorage.app",
-            messagingSenderId: "1040806517474",
-            appId: "1:1040806517474:web:6e1f112297b6808b449cbb",
-            measurementId: "G-P1YRYXDY06"
+            apiKey: "YOUR_API_KEY", // 본인의 API Key로 변경
+            authDomain: "YOUR_AUTH_DOMAIN", // 본인의 Auth Domain으로 변경
+            databaseURL: "YOUR_DATABASE_URL", // 본인의 Database URL로 변경
+            projectId: "YOUR_PROJECT_ID", // 본인의 Project ID로 변경
+            storageBucket: "YOUR_STORAGE_BUCKET", // 본인의 Storage Bucket으로 변경
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // 본인의 Messaging Sender ID로 변경
+            appId: "YOUR_APP_ID", // 본인의 App ID로 변경
+            measurementId: "YOUR_MEASUREMENT_ID" // 본인의 Measurement ID로 변경 (선택 사항)
         };
 
         // Firebase 앱 초기화 및 데이터베이스 인스턴스 참조
@@ -375,6 +331,12 @@
             "부재중": { class: "status-away", icon: "❌" },
             "수업 중": { class: "status-class", icon: "📚" },
             "학교에 없음": { class: "status-not-school", icon: "🚪" }
+        };
+
+        // 과목별 아이콘 정의
+        const subjectIcons = {
+            "수학": "➕", "물리": "⚛️", "사회": "🏛️", "역사": "📜", "생명": "🌱",
+            "국어": "📖", "영어": "🔤"
         };
 
         /**
@@ -406,12 +368,21 @@
                 }
                 renderStats();
                 renderTeachers();
-                if (currentTeacher && !document.getElementById('teacherModal').classList.contains('hidden')) {
+                
+                // 현재 로그인된 선생님이 있다면, Firebase 데이터 로드 후 currentTeacher 정보 갱신
+                if (currentTeacher) {
                     const updatedCurrentTeacher = teachers.find(t => t.name === currentTeacher.name);
                     if (updatedCurrentTeacher) {
                         currentTeacher = updatedCurrentTeacher;
-                        updateCurrentStatusDisplay();
-                        updateStatusButtons();
+                        // 대시보드 모달이 열려있다면 UI 업데이트
+                        if (!document.getElementById('teacherModal').classList.contains('hidden')) {
+                            updateCurrentStatusDisplay();
+                            updateStatusButtons();
+                        }
+                    } else {
+                        // 저장된 선생님 정보가 Firebase에서 사라진 경우
+                        console.warn("저장된 선생님 정보를 Firebase에서 찾을 수 없어 로그아웃합니다.");
+                        logout();
                     }
                 }
                 console.log("Firebase 선생님 데이터 업데이트 감지 및 UI 갱신 완료");
@@ -427,13 +398,12 @@
                 
                 // 로그인한 선생님 대시보드 질문 목록 업데이트
                 if (currentTeacher && !document.getElementById('teacherModal').classList.contains('hidden')) {
-                    renderTeacherQuestions(); 
+                    renderTeacherQuestions();
                 }
                 // 질문 리스트 보기 모달이 열려있으면 업데이트
                 if (selectedTeacherForView && !document.getElementById('viewQuestionsModal').classList.contains('hidden')) {
-                     renderPublicQuestions(selectedTeacherForView.name);
+                    renderPublicQuestions(selectedTeacherForView.name);
                 }
-
                 console.log("Firebase 질문 데이터 업데이트 감지 및 UI 갱신 완료");
             }, (error) => {
                 console.error("Firebase 질문 데이터 읽기 오류:", error);
@@ -469,17 +439,6 @@
             });
         }
 
-        // 과목별 아이콘 정의
-        const subjectIcons = {
-            "수학": "➕",
-            "물리": "⚛️",
-            "사회": "🏛️",
-            "역사": "📜",
-            "생명": "🌱",
-            "국어": "📖",
-            "영어": "🔤"
-        };
-
         /**
          * 메인 대시보드에 개별 선생님 카드를 렌더링합니다.
          * 선생님 카드 클릭 시, 질문 리스트 보기 모달이 기본으로 표시되며,
@@ -493,7 +452,7 @@
                 const config = statusConfig[teacher.status];
                 const teacherCard = document.createElement('div');
                 teacherCard.className = 'teacher-card';
-                const subjectIcon = subjectIcons[teacher.subject] || "✏️";
+                const subjectIcon = subjectIcons[teacher.subject] || "✏️"; // 기본 아이콘
                 teacherCard.innerHTML = `
                     <div class="teacher-header">
                         <div class="teacher-avatar">
@@ -522,7 +481,7 @@
             });
         }
 
-        // --- 로그인 모달 관련 함수 --- 
+        // --- 로그인 모달 관련 함수 ---
         function showLogin() {
             document.getElementById('loginModal').classList.remove('hidden');
             document.getElementById('loginName').focus();
@@ -545,12 +504,15 @@
 
             const teacher = teachers.find(t => {
                 const teacherName = t.name.toLowerCase();
+                // "t"를 제거한 이름도 함께 확인
                 const nameMatch = teacherName === name || teacherName.replace('t', '') === name;
                 return nameMatch && t.password === password;
             });
 
             if (teacher) {
                 currentTeacher = teacher;
+                // **로그인 정보 localStorage에 저장**
+                localStorage.setItem('loggedInTeacher', JSON.stringify(teacher));
                 hideLogin();
                 showTeacherDashboard();
             } else {
@@ -568,7 +530,7 @@
             document.getElementById('teacherSubject').textContent = currentTeacher.subject + ' 담당';
             updateCurrentStatusDisplay();
             updateStatusButtons();
-            renderTeacherQuestions();
+            renderTeacherQuestions(); // 질문 목록 다시 렌더링
             document.getElementById('teacherModal').classList.remove('hidden');
         }
 
@@ -594,7 +556,7 @@
             const teacherIndex = teachers.findIndex(t => t.name === currentTeacher.name);
             if (teacherIndex !== -1) {
                 teachers[teacherIndex].status = newStatus;
-                currentTeacher.status = newStatus;
+                currentTeacher.status = newStatus; // 현재 로그인된 선생님 객체도 업데이트
 
                 set(teachersRef, teachers)
                     .then(() => {
@@ -604,6 +566,8 @@
 
                 updateCurrentStatusDisplay();
                 updateStatusButtons();
+                // **localStorage에 저장된 선생님 정보도 업데이트**
+                localStorage.setItem('loggedInTeacher', JSON.stringify(currentTeacher));
             } else {
                 console.error("현재 로그인된 선생님 정보를 teachers 배열에서 찾을 수 없습니다:", currentTeacher);
             }
@@ -618,6 +582,8 @@
         // 로그아웃 (로그인 상태 해제)
         function logout() {
             currentTeacher = null;
+            // **localStorage에서 로그인 정보 제거**
+            localStorage.removeItem('loggedInTeacher');
             document.getElementById('teacherModal').classList.add('hidden');
             document.getElementById('loginName').value = '';
             document.getElementById('loginPassword').value = '';
@@ -693,16 +659,26 @@
                 teacherQuestionsSection.className = 'questions-section';
                 teacherQuestionsSection.innerHTML = `<h3>나에게 온 질문</h3><div id="questionsList"></div>`;
                 
-                teacherModalContent.insertBefore(teacherQuestionsSection, logoutBtn);
+                // logoutBtn 이전에 teacherQuestionsSection을 삽입
+                if (logoutBtn && teacherModalContent.contains(logoutBtn)) {
+                    teacherModalContent.insertBefore(teacherQuestionsSection, logoutBtn);
+                } else {
+                    teacherModalContent.appendChild(teacherQuestionsSection); // Fallback
+                }
 
-                // '닫기' 버튼 추가
+                // '닫기' 버튼 추가 (logoutBtn 앞에 추가)
                 const closeDashboardBtn = document.createElement('button');
                 closeDashboardBtn.id = 'closeDashboardBtn';
                 closeDashboardBtn.className = 'btn btn-outline';
                 closeDashboardBtn.style.cssText = 'width: 100%; margin-top: 1rem;';
                 closeDashboardBtn.innerHTML = '닫기';
                 closeDashboardBtn.addEventListener('click', closeTeacherDashboard);
-                teacherModalContent.insertBefore(closeDashboardBtn, logoutBtn);
+                
+                if (logoutBtn && teacherModalContent.contains(logoutBtn)) {
+                    teacherModalContent.insertBefore(closeDashboardBtn, logoutBtn);
+                } else {
+                    teacherModalContent.appendChild(closeDashboardBtn); // Fallback
+                }
             }
 
             const questionsList = document.getElementById('questionsList');
@@ -878,10 +854,37 @@
             });
         }
 
-
-        // --- 초기 로드 및 이벤트 리스너 설정 --- 
+        // --- 초기 로드 및 이벤트 리스너 설정 ---
         document.addEventListener('DOMContentLoaded', () => {
             initializeFirebaseDataListener();
+
+            // **2. 로그인 유지 기능: 페이지 로드 시 localStorage 확인**
+            const storedTeacher = localStorage.getItem('loggedInTeacher');
+            if (storedTeacher) {
+                try {
+                    currentTeacher = JSON.parse(storedTeacher);
+                    console.log("이전 로그인 정보로 자동 로그인 시도:", currentTeacher.name);
+                    // Firebase 데이터가 로드된 후 대시보드를 표시하기 위해 약간의 지연 또는 데이터 로드 완료 후 호출
+                    // teachers 배열이 채워진 후에 currentTeacher의 최신 정보를 가지고 대시보드를 엽니다.
+                    const checkInterval = setInterval(() => {
+                        if (teachers.length > 0) { // teachers 데이터가 로드되었는지 확인
+                            clearInterval(checkInterval);
+                            const updatedCurrentTeacher = teachers.find(t => t.name === currentTeacher.name);
+                            if (updatedCurrentTeacher) {
+                                currentTeacher = updatedCurrentTeacher; // 최신 데이터로 currentTeacher 업데이트
+                                showTeacherDashboard();
+                            } else {
+                                // 저장된 선생님 정보가 현재 Firebase 데이터에 없는 경우 (예: 데이터 삭제)
+                                console.warn("저장된 선생님 정보를 Firebase에서 찾을 수 없어 자동 로그인을 해제합니다.");
+                                logout();
+                            }
+                        }
+                    }, 100); // 0.1초마다 teachers 데이터 로드 여부 확인 (조정 가능)
+                } catch (e) {
+                    console.error("저장된 로그인 정보 파싱 오류:", e);
+                    localStorage.removeItem('loggedInTeacher'); // 오류 발생 시 저장된 정보 삭제
+                }
+            }
 
             // 로그인 버튼 이벤트 리스너
             const loginButton = document.getElementById('loginButton');
@@ -937,10 +940,11 @@
                 questionCancelBtn.addEventListener('click', hideQuestionModal);
             }
 
-            // Enter 키 입력 시 질문 제출 처리 (질문 모달이 열려 있을 때만)
+            // Enter 키 입력 시 질문 제출 처리 (질문 모달이 열려 있을 때, textarea가 아닐 때만)
             document.addEventListener('keydown', function(event) {
                 const questionModal = document.getElementById('questionModal');
                 if (event.key === 'Enter' && !questionModal.classList.contains('hidden')) {
+                    // 현재 포커스된 요소가 textarea가 아닐 경우에만 submit
                     if (document.activeElement.tagName !== 'TEXTAREA') {
                         questionForm.dispatchEvent(new Event('submit'));
                     }
@@ -958,7 +962,7 @@
             if (askQuestionFromViewModalBtn) {
                 askQuestionFromViewModalBtn.addEventListener('click', () => {
                     // 현재 보고 있는 선생님에게 질문하도록 selectedTeacherForQuestion 설정
-                    selectedTeacherForQuestion = selectedTeacherForView; 
+                    selectedTeacherForQuestion = selectedTeacherForView;
                     hideViewQuestionsModal(); // 질문 목록 모달 닫기
                     showQuestionModal(); // 질문 작성 모달 열기
                 });
