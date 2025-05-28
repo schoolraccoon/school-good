@@ -300,16 +300,16 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getDatabase, ref, set, onValue, push, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // Firebase Configuration: 여기에 사용자 본인의 Firebase 프로젝트 설정 값을 입력하세요.
+        // Firebase Configuration (처음 보내주신 값 그대로 사용)
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY", // 본인의 API Key로 변경
-            authDomain: "YOUR_AUTH_DOMAIN", // 본인의 Auth Domain으로 변경
-            databaseURL: "YOUR_DATABASE_URL", // 본인의 Database URL로 변경
-            projectId: "YOUR_PROJECT_ID", // 본인의 Project ID로 변경
-            storageBucket: "YOUR_STORAGE_BUCKET", // 본인의 Storage Bucket으로 변경
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // 본인의 Messaging Sender ID로 변경
-            appId: "YOUR_APP_ID", // 본인의 App ID로 변경
-            measurementId: "YOUR_MEASUREMENT_ID" // 본인의 Measurement ID로 변경 (선택 사항)
+            apiKey: "AIzaSyCr90aSlJxQjRNBMqLlVBunhBIHbyTPa88",
+            authDomain: "sssss-8ec7d.firebaseapp.com",
+            databaseURL: "https://sssss-8ec7d-default-rtdb.firebaseio.com",
+            projectId: "sssss-8ec7d",
+            storageBucket: "sssss-8ec7d.firebaseapp.com", // 이전 코드에서 .firebasestorage.app 이었지만, .firebaseapp.com으로 통일
+            messagingSenderId: "1040806517474",
+            appId: "1:1040806517474:web:6e1f112297b6808b449cbb",
+            measurementId: "G-P1YRYXDY06"
         };
 
         // Firebase 앱 초기화 및 데이터베이스 인스턴스 참조
@@ -364,7 +364,9 @@
                         .catch((error) => console.error("초기 데이터 저장 오류:", error));
                     teachers = defaultTeachers;
                 } else {
-                    teachers = data;
+                    // Firebase에서 배열 형태로 데이터를 가져올 경우, Object.values()를 사용하여 배열로 변환
+                    // (Firebase Realtime Database는 배열을 저장할 때 객체 형태로 변환하기 때문에 필요)
+                    teachers = Object.values(data);
                 }
                 renderStats();
                 renderTeachers();
